@@ -1,0 +1,13 @@
+modLoader="javafml"
+loaderVersion="[31,)"
+#issueTrackerURL=""
+
+[[mods]]
+modId="blockhistory"
+version="${file.jarVersion}"
+displayName="Block History"
+#displayURL=""
+authors="Mrbysco"
+description='''
+Just storing block interactions
+'''

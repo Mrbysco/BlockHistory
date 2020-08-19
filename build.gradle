@@ -1,0 +1,118 @@
+buildscript {
+    repositories {
+        maven { url = 'https://files.minecraftforge.net/maven' }
+        jcenter()
+        mavenCentral()
+    }
+    dependencies {
+        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '3.+', changing: true
+        classpath 'com.github.jengelman.gradle.plugins:shadow:4.0.2'
+    }
+}
+apply plugin: 'net.minecraftforge.gradle'
+//Only edit below this line, the above code adds and enables the necessary things for Forge to be setup.
+apply plugin: "com.github.johnrengelman.shadow"
+
+configurations {
+    shade
+    compile.extendsFrom shade
+}
+
+version = "${version}"
+group = 'com.mrbysco.blockhistory' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
+archivesBaseName = "Block-History-${mc_version}"
+
+sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '1.8' // Need this here so eclipse task generates correctly.
+
+minecraft {
+    mappings  channel: "${mcp_channel}", version: "${mcp_mappings}"
+
+    // accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
+
+    // Default run configurations.
+    // These can be tweaked, removed, or duplicated as needed.
+    runs {
+        client {
+            workingDirectory project.file('run')
+
+            // Recommended logging data for a userdev environment
+            // property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
+
+            // Recommended logging level for the console
+            property 'forge.logging.console.level', 'debug'
+
+            mods {
+                blockhistory {
+                    source sourceSets.main
+                }
+            }
+        }
+
+        server {
+            workingDirectory project.file('run')
+
+            // Recommended logging data for a userdev environment
+            // property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
+
+            // Recommended logging level for the console
+            property 'forge.logging.console.level', 'debug'
+
+            mods {
+                blockhistory {
+                    source sourceSets.main
+                }
+            }
+        }
+
+        data {
+            workingDirectory project.file('run')
+
+            // Recommended logging data for a userdev environment
+            // property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
+
+            // Recommended logging level for the console
+            property 'forge.logging.console.level', 'debug'
+
+            args '--mod', 'blockhistory', '--all', '--output', file('src/generated/resources/')
+
+            mods {
+                blockhistory {
+                    source sourceSets.main
+                }
+            }
+        }
+    }
+}
+
+repositories {
+
+}
+
+dependencies {
+    minecraft "net.minecraftforge:forge:${mc_version}-${forge_version}"
+    shade group: 'org.tmatesoft.sqljet', name: 'sqljet', version: '1.1.13'
+}
+
+// Example for how to get properties into the manifest for reading by the runtime..
+task shadeJar(type: Copy) {
+    includeEmptyDirs = false
+    from { configurations.shade.collect { zipTree(it) } }
+    include("**/*.class")
+    destinationDir("$buildDir/classes/java/main" as File)
+}
+
+jar {
+    dependsOn(shadeJar)
+
+    manifest {
+        attributes([
+            "Specification-Title": "blockhistory",
+            "Specification-Vendor": "Mrbysco",
+            "Specification-Version": "1", // We are version 1 of ourselves
+            "Implementation-Title": project.name,
+            "Implementation-Version": "${version}",
+            "Implementation-Vendor" :"Mrbysco",
+            "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+        ])
+    }
+}

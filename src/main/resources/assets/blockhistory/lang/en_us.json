@@ -1,0 +1,5 @@
+{
+  "blockhistory:commands.blockhistory.listing": "History of X: %s Y: %s Z: %s",
+  "blockhistory:commands.blockhistory.success": "At %s %s has %s a block",
+  "blockhistory:commands.blockhistory.unknown": "No history is known for given location"
+}
