@@ -11,6 +11,7 @@ import org.apache.commons.lang3.tuple.Pair;
 public class HistoryConfig {
     public static class Server {
         public final BooleanValue storeExplosions;
+        public final BooleanValue storeContainerInteractions;
         public final IntValue maxHistoryPerBlock;
         public final IntValue maxHistoryInChat;
 
@@ -19,15 +20,19 @@ public class HistoryConfig {
                     .push("trashing");
 
             storeExplosions = builder
-                    .comment("Dictates if the mod stores explosion damage to the history log")
+                    .comment("Dictates if the mod stores explosion damage to the history log [Default: true]")
                     .define("storeExplosions", true);
 
+            storeContainerInteractions = builder
+                    .comment("Dictates if the mod stores interactions made with blocks that have a container (for example a chest) [Default: true]")
+                    .define("storeContainerInteractions", true);
+
             maxHistoryPerBlock = builder
-                    .comment("The max amount of history stored per block")
+                    .comment("The max amount of history stored per block [Default: " + Integer.MAX_VALUE + "]")
                     .defineInRange("maxHistoryPerBlock", Integer.MAX_VALUE, 1, Integer.MAX_VALUE);
 
             maxHistoryInChat = builder
-                    .comment("The max amount of history stored per block")
+                    .comment("The max amount of history stored per block [Default: 10]")
                     .defineInRange("maxHistoryInChat", 10, 1, 200);
 
             builder.pop();

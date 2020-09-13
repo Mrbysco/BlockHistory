@@ -27,6 +27,6 @@ public class LogHelper {
 
     public static String getLogText(ChangeStorage change) {
         ChangeAction action = ChangeAction.getAction(change.change);
-        return String.format("At %s %s has %s a block", change.date, change.username, action.getNicerName());
+        return String.format("At %s %s has %s a block [%s]", change.date, change.username, action.getNicerName(), change.resourceLocation.toString());
     }
 }

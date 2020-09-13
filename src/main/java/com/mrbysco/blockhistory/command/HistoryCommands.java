@@ -42,7 +42,7 @@ public class HistoryCommands {
             }
             for(ChangeStorage change : viewableList) {
                 ChangeAction action = ChangeAction.getAction(change.change);
-                StringTextComponent feedback = new StringTextComponent(String.format("At %s %s has %s a block", change.date, change.username, action.getNicerName()));
+                StringTextComponent feedback = new StringTextComponent(LogHelper.getLogText(change));
                 if (action != ChangeAction.PLACE) {
                     feedback.applyTextStyle(TextFormatting.YELLOW);
                 } else {

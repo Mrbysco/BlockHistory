@@ -7,7 +7,8 @@ public enum ChangeAction {
     ERROR("error", "error"),
     BREAK("break", "broken"),
     PLACE("place", "placed"),
-    EXPLOSION("explosion", "exploded");
+    EXPLOSION("explosion", "exploded"),
+    CONTAINER_OPEN("containeropen", "opened the container of");
 
     private final String name;
     private final String nicerName;

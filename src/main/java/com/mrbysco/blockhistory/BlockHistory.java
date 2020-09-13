@@ -4,12 +4,16 @@ import com.mrbysco.blockhistory.command.HistoryCommands;
 import com.mrbysco.blockhistory.config.HistoryConfig;
 import com.mrbysco.blockhistory.storage.ChangeStorage;
 import com.mrbysco.blockhistory.storage.UserHistoryDatabase;
+import net.minecraft.block.BlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.BlockSnapshot;
 import net.minecraftforge.common.util.FakePlayer;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.event.world.ExplosionEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
@@ -65,7 +69,7 @@ public class BlockHistory {
             PlayerEntity player = event.getPlayer();
             if(player != null && !(player instanceof FakePlayer)) {
                 String username = player.getName().getUnformattedComponentText();
-                ChangeStorage changeData = new ChangeStorage(getDate(), username, "break");
+                ChangeStorage changeData = new ChangeStorage(getDate(), username, "break", event.getState().getBlock().getRegistryName());
                 UserHistoryDatabase.addHistory(event.getPos().toLong(), changeData);
             }
         }
@@ -79,7 +83,7 @@ public class BlockHistory {
                 PlayerEntity player = (PlayerEntity)entity;
 
                 String username = player.getName().getUnformattedComponentText();
-                ChangeStorage changeData = new ChangeStorage(getDate(), username, "place");
+                ChangeStorage changeData = new ChangeStorage(getDate(), username, "place", event.getPlacedBlock().getBlock().getRegistryName());
                 UserHistoryDatabase.addHistory(event.getPos().toLong(), changeData);
             }
         }
@@ -94,7 +98,7 @@ public class BlockHistory {
 
                 for(BlockSnapshot snapshot : event.getReplacedBlockSnapshots()) {
                     String username = player.getName().getUnformattedComponentText();
-                    ChangeStorage changeData = new ChangeStorage(getDate(), username, "place");
+                    ChangeStorage changeData = new ChangeStorage(getDate(), username, "place", event.getPlacedBlock().getBlock().getRegistryName());
                     UserHistoryDatabase.addHistory(snapshot.getPos().toLong(), changeData);
                 }
             }
@@ -106,22 +110,44 @@ public class BlockHistory {
         if(!event.getWorld().isRemote() && HistoryConfig.SERVER.storeExplosions.get()) {
             Entity entity = event.getExplosion().getDamageSource().getTrueSource();
             if(entity != null) {
+                World world = event.getWorld();
                 if(entity instanceof PlayerEntity && !(entity instanceof FakePlayer)) {
                     PlayerEntity player = (PlayerEntity)entity;
 
                     for(BlockPos position : event.getAffectedBlocks()) {
                         String username = player.getName().getUnformattedComponentText();
-                        ChangeStorage changeData = new ChangeStorage(getDate(), username, "explosion");
+                        BlockState state = world.getBlockState(position);
+                        ResourceLocation resourceLoc = state.getBlock().getRegistryName();
+                        ChangeStorage changeData = new ChangeStorage(getDate(), username, "explosion", resourceLoc != null ? resourceLoc : new ResourceLocation("minecraft", "air"));
                         UserHistoryDatabase.addHistory(position.toLong(), changeData);
                     }
                 } else {
                     if(entity.getType().getRegistryName() != null) {
                         String mobName = entity.getType().getRegistryName().toString();
                         for(BlockPos position : event.getAffectedBlocks()) {
-                            ChangeStorage changeData = new ChangeStorage(getDate(), mobName, "explosion");
+                            BlockState state = world.getBlockState(position);
+                            ResourceLocation resourceLoc = state.getBlock().getRegistryName();
+                            ChangeStorage changeData = new ChangeStorage(getDate(), mobName, "explosion", resourceLoc != null ? resourceLoc : new ResourceLocation("minecraft", "air"));
                             UserHistoryDatabase.addHistory(position.toLong(), changeData);
                         }
                     }
+                }
+            }
+        }
+    }
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public void onPlayerInteract(final PlayerInteractEvent.RightClickBlock event) {
+        if(!event.getWorld().isRemote() && HistoryConfig.SERVER.storeContainerInteractions.get()) {
+            PlayerEntity player = event.getPlayer();
+            if(player != null && !(player instanceof FakePlayer) && !player.isSneaking()) {
+                World world = event.getWorld();
+                BlockPos position = event.getPos();
+                BlockState state =  world.getBlockState(position);
+                if(state.getContainer(world, position) != null) {
+                    String username = player.getName().getUnformattedComponentText();
+                    ChangeStorage changeData = new ChangeStorage(getDate(), username, "containeropen", state.getBlock().getRegistryName());
+                    UserHistoryDatabase.addHistory(position.toLong(), changeData);
                 }
             }
         }
