@@ -33,7 +33,8 @@ public class HistoryCommands {
         final BlockPos position = BlockPosArgument.getBlockPos(ctx, "pos");
         List<ChangeStorage> storageList = UserHistoryDatabase.getHistory(position.toLong());
         if(!storageList.isEmpty()) {
-            ctx.getSource().sendFeedback(new StringTextComponent(String.format("History of X: %s Y: %s Z: %s", (double) position.getX(), (double) position.getY(), (double) position.getZ())).applyTextStyle(TextFormatting.DARK_GREEN), true);
+            ctx.getSource().sendFeedback(new StringTextComponent(String.format("History of X: %s Y: %s Z: %s",
+                    (double) position.getX(), (double) position.getY(), (double) position.getZ())).mergeStyle(TextFormatting.DARK_GREEN), true);
 
             List<ChangeStorage> viewableList = new ArrayList<>(storageList);
             int maxInChat = HistoryConfig.SERVER.maxHistoryInChat.get();
@@ -43,10 +44,10 @@ public class HistoryCommands {
             for(ChangeStorage change : viewableList) {
                 ChangeAction action = ChangeAction.getAction(change.change);
                 StringTextComponent feedback = new StringTextComponent(LogHelper.getLogText(change));
-                if (action != ChangeAction.PLACE) {
-                    feedback.applyTextStyle(TextFormatting.YELLOW);
+                if (action == ChangeAction.PLACE) {
+                    feedback.mergeStyle(TextFormatting.YELLOW);
                 } else {
-                    feedback.applyTextStyle(TextFormatting.RED);
+                    feedback.mergeStyle(TextFormatting.RED);
                 }
                 ctx.getSource().sendFeedback(feedback, true);
             }
@@ -62,7 +63,8 @@ public class HistoryCommands {
         List<ChangeStorage> storageList = UserHistoryDatabase.getHistory(position.toLong());
         if(!storageList.isEmpty()) {
             LogHelper.logHistoryToFile(storageList);
-            ctx.getSource().sendFeedback(new StringTextComponent(String.format("History of X: %s Y: %s Z: %s has been saved to a log", (double) position.getX(), (double) position.getY(), (double) position.getZ())).applyTextStyle(TextFormatting.DARK_GREEN), true);
+            ctx.getSource().sendFeedback(new StringTextComponent(String.format("History of X: %s Y: %s Z: %s has been saved to a log",
+                    (double) position.getX(), (double) position.getY(), (double) position.getZ())).mergeStyle(TextFormatting.DARK_GREEN), true);
         } else {
             ctx.getSource().sendFeedback(new StringTextComponent("No history is known for given location"), true);
         }
