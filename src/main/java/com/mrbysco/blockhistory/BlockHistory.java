@@ -198,11 +198,11 @@ public class BlockHistory {
                     ChangeStorage changeData = null;
                     if(newCount < oldCount) {
                         changeData = new ChangeStorage(getDate(), username, "inventory_withdrawal", location, differenceList.toString());
-                        LOGGER.info("User withdrew the following: {}",  differenceList);
+//                        LOGGER.debug("User withdrew the following: {}",  differenceList);
                     }
                     if (newCount > oldCount){
                         changeData = new ChangeStorage(getDate(), username, "inventory_insertion", location, differenceList.toString());
-                        LOGGER.info("User inserted the following: {}", differenceList);
+//                        LOGGER.debug("User inserted the following: {}", differenceList);
                     }
                     if(changeData != null) {
                         UserHistoryDatabase.addHistory(position.toLong(), changeData);
