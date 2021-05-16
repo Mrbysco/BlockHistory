@@ -7,13 +7,13 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mrbysco.blockhistory.BlockHistory;
 import com.mrbysco.blockhistory.config.HistoryConfig;
 import com.mrbysco.blockhistory.helper.LogHelper;
-import com.mrbysco.blockhistory.storage.ChangeAction;
 import com.mrbysco.blockhistory.storage.ChangeStorage;
 import com.mrbysco.blockhistory.storage.UserHistoryDatabase;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
 import net.minecraft.command.arguments.BlockPosArgument;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TextFormatting;
 
@@ -33,7 +33,7 @@ public class HistoryCommands {
         final BlockPos position = BlockPosArgument.getBlockPos(ctx, "pos");
         List<ChangeStorage> storageList = UserHistoryDatabase.getHistory(position.toLong());
         if(!storageList.isEmpty()) {
-            ctx.getSource().sendFeedback(new StringTextComponent(String.format("History of X: %s Y: %s Z: %s",
+            ctx.getSource().sendFeedback(new StringTextComponent(String.format("History of X: %s, Y: %s, Z: %s",
                     (double) position.getX(), (double) position.getY(), (double) position.getZ())).mergeStyle(TextFormatting.DARK_GREEN), true);
 
             List<ChangeStorage> viewableList = new ArrayList<>(storageList);
@@ -42,13 +42,7 @@ public class HistoryCommands {
                 viewableList = storageList.subList(storageList.size()-maxInChat, storageList.size());
             }
             for(ChangeStorage change : viewableList) {
-                ChangeAction action = ChangeAction.getAction(change.change);
-                StringTextComponent feedback = new StringTextComponent(LogHelper.getLogText(change));
-                if (action == ChangeAction.PLACE) {
-                    feedback.mergeStyle(TextFormatting.YELLOW);
-                } else {
-                    feedback.mergeStyle(TextFormatting.RED);
-                }
+                ITextComponent feedback = LogHelper.getLogText(change);
                 ctx.getSource().sendFeedback(feedback, true);
             }
         } else {
@@ -63,7 +57,7 @@ public class HistoryCommands {
         List<ChangeStorage> storageList = UserHistoryDatabase.getHistory(position.toLong());
         if(!storageList.isEmpty()) {
             LogHelper.logHistoryToFile(storageList);
-            ctx.getSource().sendFeedback(new StringTextComponent(String.format("History of X: %s Y: %s Z: %s has been saved to a log",
+            ctx.getSource().sendFeedback(new StringTextComponent(String.format("History of X: %s, Y: %s, Z: %s has been saved to a log",
                     (double) position.getX(), (double) position.getY(), (double) position.getZ())).mergeStyle(TextFormatting.DARK_GREEN), true);
         } else {
             ctx.getSource().sendFeedback(new StringTextComponent("No history is known for given location"), true);

@@ -2,11 +2,15 @@ package com.mrbysco.blockhistory;
 
 import com.mrbysco.blockhistory.command.HistoryCommands;
 import com.mrbysco.blockhistory.config.HistoryConfig;
+import com.mrbysco.blockhistory.helper.InventoryHelper;
 import com.mrbysco.blockhistory.storage.ChangeStorage;
 import com.mrbysco.blockhistory.storage.UserHistoryDatabase;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.inventory.container.Container;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -14,6 +18,7 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.BlockSnapshot;
 import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.event.RegisterCommandsEvent;
+import net.minecraftforge.event.entity.player.PlayerContainerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.event.world.ExplosionEvent;
@@ -36,6 +41,9 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 @Mod(BlockHistory.MOD_ID)
 public class BlockHistory {
@@ -136,6 +144,9 @@ public class BlockHistory {
         }
     }
 
+    private static final Map<UUID, Long> CONTAINER_PLACE_MAP = new HashMap<>();
+    private static final Map<UUID, NonNullList<ItemStack>> CONTAINER_MAP = new HashMap<>();
+
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onPlayerInteract(final PlayerInteractEvent.RightClickBlock event) {
         if(!event.getWorld().isRemote() && HistoryConfig.SERVER.storeContainerInteractions.get()) {
@@ -145,11 +156,60 @@ public class BlockHistory {
                 BlockPos position = event.getPos();
                 BlockState state =  world.getBlockState(position);
                 if(state.getContainer(world, position) != null) {
+                    if(HistoryConfig.SERVER.storeContainerInventoryChanges.get()) {
+                        CONTAINER_PLACE_MAP.put(player.getUniqueID(), position.toLong());
+                    }
                     String username = player.getName().getUnformattedComponentText();
                     ChangeStorage changeData = new ChangeStorage(getDate(), username, "containeropen", state.getBlock().getRegistryName());
                     UserHistoryDatabase.addHistory(position.toLong(), changeData);
                 }
             }
+        }
+    }
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public void onPlayerContainerOpen(final PlayerContainerEvent.Open event) {
+        PlayerEntity player = event.getPlayer();
+        if(!player.getEntityWorld().isRemote() && HistoryConfig.SERVER.storeContainerInventoryChanges.get()) {
+            Container container = event.getContainer();
+            if(container.getInventory().size() >= 1) {
+                CONTAINER_MAP.put(player.getUniqueID(), InventoryHelper.getContainerInventory(container));
+            }
+        }
+    }
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public void onPlayerContainerClose(final PlayerContainerEvent.Close event) {
+        PlayerEntity player = event.getPlayer();
+        World world = player.getEntityWorld();
+        if(!world.isRemote() && HistoryConfig.SERVER.storeContainerInventoryChanges.get()) {
+            UUID playerUUID = event.getPlayer().getUniqueID();
+            NonNullList<ItemStack> oldInventory = CONTAINER_MAP.getOrDefault(playerUUID, null);
+            Container container = event.getContainer();
+            if(CONTAINER_PLACE_MAP.containsKey(playerUUID) && oldInventory != null && container != null) {
+                NonNullList<ItemStack> currentInventory = InventoryHelper.getContainerInventory(container);
+                int oldCount = InventoryHelper.getItemCount(oldInventory);
+                int newCount = InventoryHelper.getItemCount(currentInventory);
+                if(oldCount != newCount) {
+                    NonNullList<ItemStack> differenceList = InventoryHelper.getInventoryChange(oldInventory, currentInventory);
+                    String username = player.getName().getUnformattedComponentText();
+                    BlockPos position = BlockPos.fromLong(CONTAINER_PLACE_MAP.get(playerUUID));
+                    ResourceLocation location = world.getBlockState(position).getBlock().getRegistryName();
+                    ChangeStorage changeData = null;
+                    if(newCount < oldCount) {
+                        changeData = new ChangeStorage(getDate(), username, "inventory_withdrawal", location, differenceList.toString());
+                        LOGGER.info("User withdrew the following: {}",  differenceList);
+                    }
+                    if (newCount > oldCount){
+                        changeData = new ChangeStorage(getDate(), username, "inventory_insertion", location, differenceList.toString());
+                        LOGGER.info("User inserted the following: {}", differenceList);
+                    }
+                    if(changeData != null) {
+                        UserHistoryDatabase.addHistory(position.toLong(), changeData);
+                    }
+                }
+            }
+            CONTAINER_MAP.remove(playerUUID);
         }
     }
 

@@ -12,6 +12,7 @@ public class HistoryConfig {
     public static class Server {
         public final BooleanValue storeExplosions;
         public final BooleanValue storeContainerInteractions;
+        public final BooleanValue storeContainerInventoryChanges;
         public final IntValue maxHistoryPerBlock;
         public final IntValue maxHistoryInChat;
 
@@ -27,6 +28,10 @@ public class HistoryConfig {
                     .comment("Dictates if the mod stores interactions made with blocks that have a container (for example a chest) [Default: true]")
                     .define("storeContainerInteractions", true);
 
+            storeContainerInventoryChanges = builder
+                    .comment("Dictates if the mod stores inventory interactions made with blocks that have an inventory (for example a chest) [Default: true]")
+                    .define("storeContainerInventoryChanges", true);
+
             maxHistoryPerBlock = builder
                     .comment("The max amount of history stored per block [Default: " + Integer.MAX_VALUE + "]")
                     .defineInRange("maxHistoryPerBlock", Integer.MAX_VALUE, 1, Integer.MAX_VALUE);
@@ -40,9 +45,9 @@ public class HistoryConfig {
     }
 
     public static final ForgeConfigSpec serverSpec;
-    public static final HistoryConfig.Server SERVER;
+    public static final Server SERVER;
     static {
-        final Pair<HistoryConfig.Server, ForgeConfigSpec> specPair = new ForgeConfigSpec.Builder().configure(HistoryConfig.Server::new);
+        final Pair<Server, ForgeConfigSpec> specPair = new ForgeConfigSpec.Builder().configure(Server::new);
         serverSpec = specPair.getRight();
         SERVER = specPair.getLeft();
     }
