@@ -17,8 +17,8 @@ public class HistoryConfig {
         public final IntValue maxHistoryInChat;
 
         Server(ForgeConfigSpec.Builder builder) {
-            builder.comment("Trashing settings")
-                    .push("trashing");
+            builder.comment("Logging settings")
+                    .push("Logging");
 
             storeExplosions = builder
                     .comment("Dictates if the mod stores explosion damage to the history log [Default: true]")
