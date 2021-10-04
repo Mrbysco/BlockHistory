@@ -148,6 +148,7 @@ publishing {
                 artifactId = archivesBaseName
                 classifier null
             }
+            artifact shadowJar
         }
     }
     repositories {
