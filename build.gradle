@@ -115,6 +115,8 @@ reobf {
     shadowJar{}
 }
 
+build.dependsOn shadowJar
+
 jar {
     manifest {
         attributes([
