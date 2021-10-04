@@ -103,6 +103,10 @@ artifacts {
 }
 
 jar.finalizedBy('reobfJar')
+shadowJar.finalizedBy('reobfShadowJar')
+
+publish.dependsOn('reobfJar')
+publish.dependsOn('reobfShadowJar')
 
 shadowJar {
     project.configurations.shadow.setTransitive(true)
