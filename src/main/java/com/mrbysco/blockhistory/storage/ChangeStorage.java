@@ -1,6 +1,6 @@
 package com.mrbysco.blockhistory.storage;
 
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.resources.ResourceLocation;
 
 public class ChangeStorage{
     public String date;

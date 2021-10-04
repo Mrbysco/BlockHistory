@@ -15,16 +15,11 @@ apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: 'maven-publish'
 
-configurations {
-    shade
-    compile.extendsFrom shade
-}
-
 version = "${version}"
 group = 'com.mrbysco.blockhistory' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = "Block-History-${mc_version}"
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(8) // Mojang ships Java 8 to end users, so your mod should target Java 8.
+java.toolchain.languageVersion = JavaLanguageVersion.of(16) // Mojang ships Java 8 to end users, so your mod should target Java 8.
 
 println('Java: ' + System.getProperty('java.version') + ' JVM: ' + System.getProperty('java.vm.version') + '(' + System.getProperty('java.vendor') + ') Arch: ' + System.getProperty('os.arch'))
 minecraft {
@@ -43,7 +38,7 @@ minecraft {
 
             // Recommended logging level for the console
             property 'forge.logging.console.level', 'debug'
-
+            source sourceSets.main
             mods {
                 blockhistory {
                     source sourceSets.main
@@ -59,7 +54,7 @@ minecraft {
 
             // Recommended logging level for the console
             property 'forge.logging.console.level', 'debug'
-
+            source sourceSets.main
             mods {
                 blockhistory {
                     source sourceSets.main
@@ -84,6 +79,12 @@ minecraft {
                 }
             }
         }
+
+        all {
+            lazyToken('minecraft_classpath') {
+                configurations.shadow.copyRecursive().resolve().collect { it.absolutePath }.join(File.pathSeparator)
+            }
+        }
     }
 }
 
@@ -93,15 +94,15 @@ sourceSets.main.resources { srcDir 'src/generated/resources' }
 dependencies {
     minecraft "net.minecraftforge:forge:${mc_version}-${forge_version}"
 
-    compileOnly ("org.tmatesoft.sqljet:sqljet:${sqljet_version}")
-    runtimeOnly ("org.tmatesoft.sqljet:sqljet:${sqljet_version}")
-
+    implementation ("org.tmatesoft.sqljet:sqljet:${sqljet_version}")
     shadow ("org.tmatesoft.sqljet:sqljet:${sqljet_version}")
 }
 
 artifacts {
     archives shadowJar
 }
+
+jar.finalizedBy('reobfJar')
 
 shadowJar {
     project.configurations.shadow.setTransitive(true)
@@ -110,7 +111,9 @@ shadowJar {
     classifier ''
 }
 
-build.dependsOn shadowJar
+reobf {
+    shadowJar{}
+}
 
 jar {
     manifest {

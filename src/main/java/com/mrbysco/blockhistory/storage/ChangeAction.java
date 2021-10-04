@@ -1,23 +1,23 @@
 package com.mrbysco.blockhistory.storage;
 
-import net.minecraft.util.text.TextFormatting;
+import net.minecraft.ChatFormatting;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public enum ChangeAction {
-    ERROR("error", "error", TextFormatting.RED),
-    BREAK("break", "broken", TextFormatting.RED),
-    PLACE("place", "placed", TextFormatting.GREEN),
-    EXPLOSION("explosion", "exploded", TextFormatting.RED),
-    CONTAINER_OPEN("containeropen", "opened the container of", TextFormatting.YELLOW),
-    INVENTORY_WITHDRAWAL("inventory_withdrawal", "withdrew %s from", TextFormatting.RED),
-    INVENTORY_INSERTION("inventory_insertion", "inserted %s into", TextFormatting.GREEN);
+    ERROR("error", "error", ChatFormatting.RED),
+    BREAK("break", "broken", ChatFormatting.RED),
+    PLACE("place", "placed", ChatFormatting.GREEN),
+    EXPLOSION("explosion", "exploded", ChatFormatting.RED),
+    CONTAINER_OPEN("containeropen", "opened the container of", ChatFormatting.YELLOW),
+    INVENTORY_WITHDRAWAL("inventory_withdrawal", "withdrew %s from", ChatFormatting.RED),
+    INVENTORY_INSERTION("inventory_insertion", "inserted %s into", ChatFormatting.GREEN);
 
     private final String name;
     private final String nicerName;
-    private final TextFormatting color;
-    ChangeAction(String friendlyName, String nicerName, TextFormatting color) {
+    private final ChatFormatting color;
+    ChangeAction(String friendlyName, String nicerName, ChatFormatting color) {
         this.name = friendlyName;
         this.nicerName = nicerName;
         this.color = color;
@@ -31,7 +31,7 @@ public enum ChangeAction {
         return nicerName;
     }
 
-    public TextFormatting getColor() {
+    public ChatFormatting getColor() {
         return color;
     }
 

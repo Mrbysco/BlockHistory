@@ -5,15 +5,15 @@ import com.mrbysco.blockhistory.config.HistoryConfig;
 import com.mrbysco.blockhistory.helper.InventoryHelper;
 import com.mrbysco.blockhistory.storage.ChangeStorage;
 import com.mrbysco.blockhistory.storage.UserHistoryDatabase;
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.container.Container;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.NonNullList;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.NonNullList;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.BlockSnapshot;
 import net.minecraftforge.common.util.FakePlayer;
@@ -24,14 +24,14 @@ import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.event.world.ExplosionEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.ExtensionPoint;
+import net.minecraftforge.fml.IExtensionPoint;
+import net.minecraftforge.fml.IExtensionPoint.DisplayTest;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLPaths;
-import net.minecraftforge.fml.network.FMLNetworkConstants;
-import org.apache.commons.lang3.tuple.Pair;
+import net.minecraftforge.fmllegacy.network.FMLNetworkConstants;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.tmatesoft.sqljet.core.SqlJetException;
@@ -64,7 +64,10 @@ public class BlockHistory {
         MinecraftForge.EVENT_BUS.register(this);
         MinecraftForge.EVENT_BUS.addListener(this::onCommandEvent);
 
-        ModLoadingContext.get().registerExtensionPoint(ExtensionPoint.DISPLAYTEST, () -> Pair.of(() -> FMLNetworkConstants.IGNORESERVERONLY, (a, b) -> true));
+        //Make sure the mod being absent on the other network side does not cause the client to display the server as incompatible
+        ModLoadingContext.get().registerExtensionPoint(DisplayTest.class,()->
+                new IExtensionPoint.DisplayTest(() -> FMLNetworkConstants.IGNORESERVERONLY,
+                        (remoteVersionString,networkBool) -> true));
     }
 
     public void onCommandEvent(RegisterCommandsEvent event) {
@@ -74,7 +77,7 @@ public class BlockHistory {
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onBlockBreak(final BlockEvent.BreakEvent event) {
         if(!event.getWorld().isClientSide()) {
-            PlayerEntity player = event.getPlayer();
+            Player player = event.getPlayer();
             if(player != null && !(player instanceof FakePlayer)) {
                 String username = player.getName().getContents();
                 ChangeStorage changeData = new ChangeStorage(getDate(), username, "break", event.getState().getBlock().getRegistryName());
@@ -87,8 +90,8 @@ public class BlockHistory {
     public void onBlockPlace(final BlockEvent.EntityPlaceEvent event) {
         if(!event.getWorld().isClientSide()) {
             Entity entity = event.getEntity();
-            if(entity instanceof PlayerEntity && !(entity instanceof FakePlayer)) {
-                PlayerEntity player = (PlayerEntity)entity;
+            if(entity instanceof Player && !(entity instanceof FakePlayer)) {
+                Player player = (Player)entity;
 
                 String username = player.getName().getContents();
                 ChangeStorage changeData = new ChangeStorage(getDate(), username, "place", event.getPlacedBlock().getBlock().getRegistryName());
@@ -101,8 +104,8 @@ public class BlockHistory {
     public void onMultiBlockPlace(final BlockEvent.EntityMultiPlaceEvent event) {
         if(!event.getWorld().isClientSide()) {
             Entity entity = event.getEntity();
-            if(entity instanceof PlayerEntity && !(entity instanceof FakePlayer)) {
-                PlayerEntity player = (PlayerEntity)entity;
+            if(entity instanceof Player && !(entity instanceof FakePlayer)) {
+                Player player = (Player)entity;
 
                 for(BlockSnapshot snapshot : event.getReplacedBlockSnapshots()) {
                     String username = player.getName().getContents();
@@ -118,9 +121,9 @@ public class BlockHistory {
         if(!event.getWorld().isClientSide() && HistoryConfig.SERVER.storeExplosions.get()) {
             Entity entity = event.getExplosion().getDamageSource().getEntity();
             if(entity != null) {
-                World world = event.getWorld();
-                if(entity instanceof PlayerEntity && !(entity instanceof FakePlayer)) {
-                    PlayerEntity player = (PlayerEntity)entity;
+                Level world = event.getWorld();
+                if(entity instanceof Player && !(entity instanceof FakePlayer)) {
+                    Player player = (Player)entity;
 
                     for(BlockPos position : event.getAffectedBlocks()) {
                         String username = player.getName().getContents();
@@ -150,9 +153,9 @@ public class BlockHistory {
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onPlayerInteract(final PlayerInteractEvent.RightClickBlock event) {
         if(!event.getWorld().isClientSide() && HistoryConfig.SERVER.storeContainerInteractions.get()) {
-            PlayerEntity player = event.getPlayer();
+            Player player = event.getPlayer();
             if(player != null && !(player instanceof FakePlayer) && !player.isShiftKeyDown()) {
-                World world = event.getWorld();
+                Level world = event.getWorld();
                 BlockPos position = event.getPos();
                 BlockState state =  world.getBlockState(position);
                 if(state.getMenuProvider(world, position) != null) {
@@ -169,9 +172,9 @@ public class BlockHistory {
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onPlayerContainerOpen(final PlayerContainerEvent.Open event) {
-        PlayerEntity player = event.getPlayer();
+        Player player = event.getPlayer();
         if(!player.getCommandSenderWorld().isClientSide() && HistoryConfig.SERVER.storeContainerInventoryChanges.get()) {
-            Container container = event.getContainer();
+            AbstractContainerMenu container = event.getContainer();
             if(container.getItems().size() >= 1) {
                 CONTAINER_MAP.put(player.getUUID(), InventoryHelper.getContainerInventory(container));
             }
@@ -180,12 +183,12 @@ public class BlockHistory {
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onPlayerContainerClose(final PlayerContainerEvent.Close event) {
-        PlayerEntity player = event.getPlayer();
-        World world = player.getCommandSenderWorld();
+        Player player = event.getPlayer();
+        Level world = player.getCommandSenderWorld();
         if(!world.isClientSide() && HistoryConfig.SERVER.storeContainerInventoryChanges.get()) {
             UUID playerUUID = event.getPlayer().getUUID();
             NonNullList<ItemStack> oldInventory = CONTAINER_MAP.getOrDefault(playerUUID, null);
-            Container container = event.getContainer();
+            AbstractContainerMenu container = event.getContainer();
             if(CONTAINER_PLACE_MAP.containsKey(playerUUID) && oldInventory != null && container != null) {
                 NonNullList<ItemStack> currentInventory = InventoryHelper.getContainerInventory(container);
                 int oldCount = InventoryHelper.getItemCount(oldInventory);

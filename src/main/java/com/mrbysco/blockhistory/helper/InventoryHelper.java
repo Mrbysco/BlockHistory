@@ -1,20 +1,20 @@
 package com.mrbysco.blockhistory.helper;
 
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.inventory.container.Container;
-import net.minecraft.inventory.container.Slot;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.NonNullList;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.core.NonNullList;
 
 import java.util.List;
 
 public class InventoryHelper {
-	public static NonNullList<ItemStack> getContainerInventory(Container container) {
+	public static NonNullList<ItemStack> getContainerInventory(AbstractContainerMenu container) {
 		int regularSlots = 0;
 		List<Slot> slots = container.slots;
 		for(int i = 0; i < slots.size(); i++) {
 			Slot slot = slots.get(i);
-			if(slot.container instanceof PlayerInventory) {
+			if(slot.container instanceof Inventory) {
 				break;
 			} else {
 				regularSlots++;
