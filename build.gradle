@@ -103,10 +103,6 @@ artifacts {
 }
 
 jar.finalizedBy('reobfJar')
-shadowJar.finalizedBy('reobfShadowJar')
-
-publish.dependsOn('reobfJar')
-publish.dependsOn('reobfShadowJar')
 
 shadowJar {
     project.configurations.shadow.setTransitive(true)
@@ -124,21 +120,21 @@ build.dependsOn shadowJar
 jar {
     manifest {
         attributes([
-            "Specification-Title": "blockhistory",
-            "Specification-Vendor": "Mrbysco",
-            "Specification-Version": "1", // We are version 1 of ourselves
-            "Implementation-Title": project.name,
-            "Implementation-Version": "${version}",
-            "Implementation-Vendor" :"Mrbysco",
-            "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+                "Specification-Title": "blockhistory",
+                "Specification-Vendor": "Mrbysco",
+                "Specification-Version": "1", // We are version 1 of ourselves
+                "Implementation-Title": project.name,
+                "Implementation-Version": "${version}",
+                "Implementation-Vendor" :"Mrbysco",
+                "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
         ])
     }
 }
 
 def reobfFile = file("$buildDir/reobfJar/output.jar")
 def reobfArtifact = artifacts.add('default', reobfFile) {
-    type 'shadowJar'
-    builtBy 'reobfShadowJar'
+    type 'jar'
+    builtBy 'reobfJar'
 }
 publishing {
     publications {
