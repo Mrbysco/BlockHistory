@@ -73,41 +73,41 @@ public class BlockHistory {
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onBlockBreak(final BlockEvent.BreakEvent event) {
-        if(!event.getWorld().isRemote()) {
+        if(!event.getWorld().isClientSide()) {
             PlayerEntity player = event.getPlayer();
             if(player != null && !(player instanceof FakePlayer)) {
-                String username = player.getName().getUnformattedComponentText();
+                String username = player.getName().getContents();
                 ChangeStorage changeData = new ChangeStorage(getDate(), username, "break", event.getState().getBlock().getRegistryName());
-                UserHistoryDatabase.addHistory(event.getPos().toLong(), changeData);
+                UserHistoryDatabase.addHistory(event.getPos().asLong(), changeData);
             }
         }
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onBlockPlace(final BlockEvent.EntityPlaceEvent event) {
-        if(!event.getWorld().isRemote()) {
+        if(!event.getWorld().isClientSide()) {
             Entity entity = event.getEntity();
             if(entity instanceof PlayerEntity && !(entity instanceof FakePlayer)) {
                 PlayerEntity player = (PlayerEntity)entity;
 
-                String username = player.getName().getUnformattedComponentText();
+                String username = player.getName().getContents();
                 ChangeStorage changeData = new ChangeStorage(getDate(), username, "place", event.getPlacedBlock().getBlock().getRegistryName());
-                UserHistoryDatabase.addHistory(event.getPos().toLong(), changeData);
+                UserHistoryDatabase.addHistory(event.getPos().asLong(), changeData);
             }
         }
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onMultiBlockPlace(final BlockEvent.EntityMultiPlaceEvent event) {
-        if(!event.getWorld().isRemote()) {
+        if(!event.getWorld().isClientSide()) {
             Entity entity = event.getEntity();
             if(entity instanceof PlayerEntity && !(entity instanceof FakePlayer)) {
                 PlayerEntity player = (PlayerEntity)entity;
 
                 for(BlockSnapshot snapshot : event.getReplacedBlockSnapshots()) {
-                    String username = player.getName().getUnformattedComponentText();
+                    String username = player.getName().getContents();
                     ChangeStorage changeData = new ChangeStorage(getDate(), username, "place", event.getPlacedBlock().getBlock().getRegistryName());
-                    UserHistoryDatabase.addHistory(snapshot.getPos().toLong(), changeData);
+                    UserHistoryDatabase.addHistory(snapshot.getPos().asLong(), changeData);
                 }
             }
         }
@@ -115,19 +115,19 @@ public class BlockHistory {
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onExplosionEvent(final ExplosionEvent.Detonate event) {
-        if(!event.getWorld().isRemote() && HistoryConfig.SERVER.storeExplosions.get()) {
-            Entity entity = event.getExplosion().getDamageSource().getTrueSource();
+        if(!event.getWorld().isClientSide() && HistoryConfig.SERVER.storeExplosions.get()) {
+            Entity entity = event.getExplosion().getDamageSource().getEntity();
             if(entity != null) {
                 World world = event.getWorld();
                 if(entity instanceof PlayerEntity && !(entity instanceof FakePlayer)) {
                     PlayerEntity player = (PlayerEntity)entity;
 
                     for(BlockPos position : event.getAffectedBlocks()) {
-                        String username = player.getName().getUnformattedComponentText();
+                        String username = player.getName().getContents();
                         BlockState state = world.getBlockState(position);
                         ResourceLocation resourceLoc = state.getBlock().getRegistryName();
                         ChangeStorage changeData = new ChangeStorage(getDate(), username, "explosion", resourceLoc != null ? resourceLoc : new ResourceLocation("minecraft", "air"));
-                        UserHistoryDatabase.addHistory(position.toLong(), changeData);
+                        UserHistoryDatabase.addHistory(position.asLong(), changeData);
                     }
                 } else {
                     if(entity.getType().getRegistryName() != null) {
@@ -136,7 +136,7 @@ public class BlockHistory {
                             BlockState state = world.getBlockState(position);
                             ResourceLocation resourceLoc = state.getBlock().getRegistryName();
                             ChangeStorage changeData = new ChangeStorage(getDate(), mobName, "explosion", resourceLoc != null ? resourceLoc : new ResourceLocation("minecraft", "air"));
-                            UserHistoryDatabase.addHistory(position.toLong(), changeData);
+                            UserHistoryDatabase.addHistory(position.asLong(), changeData);
                         }
                     }
                 }
@@ -149,19 +149,19 @@ public class BlockHistory {
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onPlayerInteract(final PlayerInteractEvent.RightClickBlock event) {
-        if(!event.getWorld().isRemote() && HistoryConfig.SERVER.storeContainerInteractions.get()) {
+        if(!event.getWorld().isClientSide() && HistoryConfig.SERVER.storeContainerInteractions.get()) {
             PlayerEntity player = event.getPlayer();
-            if(player != null && !(player instanceof FakePlayer) && !player.isSneaking()) {
+            if(player != null && !(player instanceof FakePlayer) && !player.isShiftKeyDown()) {
                 World world = event.getWorld();
                 BlockPos position = event.getPos();
                 BlockState state =  world.getBlockState(position);
-                if(state.getContainer(world, position) != null) {
+                if(state.getMenuProvider(world, position) != null) {
                     if(HistoryConfig.SERVER.storeContainerInventoryChanges.get()) {
-                        CONTAINER_PLACE_MAP.put(player.getUniqueID(), position.toLong());
+                        CONTAINER_PLACE_MAP.put(player.getUUID(), position.asLong());
                     }
-                    String username = player.getName().getUnformattedComponentText();
+                    String username = player.getName().getContents();
                     ChangeStorage changeData = new ChangeStorage(getDate(), username, "containeropen", state.getBlock().getRegistryName());
-                    UserHistoryDatabase.addHistory(position.toLong(), changeData);
+                    UserHistoryDatabase.addHistory(position.asLong(), changeData);
                 }
             }
         }
@@ -170,10 +170,10 @@ public class BlockHistory {
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onPlayerContainerOpen(final PlayerContainerEvent.Open event) {
         PlayerEntity player = event.getPlayer();
-        if(!player.getEntityWorld().isRemote() && HistoryConfig.SERVER.storeContainerInventoryChanges.get()) {
+        if(!player.getCommandSenderWorld().isClientSide() && HistoryConfig.SERVER.storeContainerInventoryChanges.get()) {
             Container container = event.getContainer();
-            if(container.getInventory().size() >= 1) {
-                CONTAINER_MAP.put(player.getUniqueID(), InventoryHelper.getContainerInventory(container));
+            if(container.getItems().size() >= 1) {
+                CONTAINER_MAP.put(player.getUUID(), InventoryHelper.getContainerInventory(container));
             }
         }
     }
@@ -181,9 +181,9 @@ public class BlockHistory {
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onPlayerContainerClose(final PlayerContainerEvent.Close event) {
         PlayerEntity player = event.getPlayer();
-        World world = player.getEntityWorld();
-        if(!world.isRemote() && HistoryConfig.SERVER.storeContainerInventoryChanges.get()) {
-            UUID playerUUID = event.getPlayer().getUniqueID();
+        World world = player.getCommandSenderWorld();
+        if(!world.isClientSide() && HistoryConfig.SERVER.storeContainerInventoryChanges.get()) {
+            UUID playerUUID = event.getPlayer().getUUID();
             NonNullList<ItemStack> oldInventory = CONTAINER_MAP.getOrDefault(playerUUID, null);
             Container container = event.getContainer();
             if(CONTAINER_PLACE_MAP.containsKey(playerUUID) && oldInventory != null && container != null) {
@@ -192,8 +192,8 @@ public class BlockHistory {
                 int newCount = InventoryHelper.getItemCount(currentInventory);
                 if(oldCount != newCount) {
                     NonNullList<ItemStack> differenceList = InventoryHelper.getInventoryChange(oldInventory, currentInventory);
-                    String username = player.getName().getUnformattedComponentText();
-                    BlockPos position = BlockPos.fromLong(CONTAINER_PLACE_MAP.get(playerUUID));
+                    String username = player.getName().getContents();
+                    BlockPos position = BlockPos.of(CONTAINER_PLACE_MAP.get(playerUUID));
                     ResourceLocation location = world.getBlockState(position).getBlock().getRegistryName();
                     ChangeStorage changeData = null;
                     if(newCount < oldCount) {
@@ -205,7 +205,7 @@ public class BlockHistory {
 //                        LOGGER.debug("User inserted the following: {}", differenceList);
                     }
                     if(changeData != null) {
-                        UserHistoryDatabase.addHistory(position.toLong(), changeData);
+                        UserHistoryDatabase.addHistory(position.asLong(), changeData);
                     }
                 }
             }

@@ -11,17 +11,17 @@ import java.util.List;
 public class InventoryHelper {
 	public static NonNullList<ItemStack> getContainerInventory(Container container) {
 		int regularSlots = 0;
-		List<Slot> slots = container.inventorySlots;
+		List<Slot> slots = container.slots;
 		for(int i = 0; i < slots.size(); i++) {
 			Slot slot = slots.get(i);
-			if(slot.inventory instanceof PlayerInventory) {
+			if(slot.container instanceof PlayerInventory) {
 				break;
 			} else {
 				regularSlots++;
 			}
 		}
 		NonNullList<ItemStack> inventoryList = NonNullList.create();
-		List<ItemStack> subList = container.getInventory().subList(0, regularSlots);
+		List<ItemStack> subList = container.getItems().subList(0, regularSlots);
 		for(ItemStack stack : subList) {
 			inventoryList.add(stack.copy());
 		}
@@ -47,7 +47,7 @@ public class InventoryHelper {
 			originalInventory.forEach(stack -> differenceList.add(stack.copy()));
 			for(int i = 0; i < inventory.size(); i++) {
 				ItemStack stack = inventory.get(i);
-				if(ItemStack.areItemStacksEqual(originalInventory.get(i), stack)) {
+				if(ItemStack.matches(originalInventory.get(i), stack)) {
 					differenceList.set(i, ItemStack.EMPTY);
 				}
 			}
@@ -58,7 +58,7 @@ public class InventoryHelper {
 			inventory.forEach(stack -> differenceList.add(stack.copy()));
 			for(int i = 0; i < originalInventory.size(); i++) {
 				ItemStack stack = originalInventory.get(i);
-				if(ItemStack.areItemStacksEqual(inventory.get(i), stack)) {
+				if(ItemStack.matches(inventory.get(i), stack)) {
 					differenceList.set(i, ItemStack.EMPTY);
 				}
 			}
