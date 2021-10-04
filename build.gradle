@@ -137,8 +137,8 @@ jar {
 
 def reobfFile = file("$buildDir/reobfJar/output.jar")
 def reobfArtifact = artifacts.add('default', reobfFile) {
-    type 'jar'
-    builtBy 'reobfJar'
+    type 'shadowJar'
+    builtBy 'reobfShadowJar'
 }
 publishing {
     publications {
@@ -148,7 +148,6 @@ publishing {
                 artifactId = archivesBaseName
                 classifier null
             }
-            artifact shadowJar
         }
     }
     repositories {
