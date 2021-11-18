@@ -110,6 +110,10 @@ shadowJar {
     classifier ''
 }
 
+reobf {
+   shadowJar {}
+}
+
 build.dependsOn shadowJar
 
 jar {
