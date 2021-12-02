@@ -31,7 +31,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLPaths;
-import net.minecraftforge.fmllegacy.network.FMLNetworkConstants;
+import net.minecraftforge.network.NetworkConstants;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.tmatesoft.sqljet.core.SqlJetException;
@@ -66,7 +66,7 @@ public class BlockHistory {
 
         //Make sure the mod being absent on the other network side does not cause the client to display the server as incompatible
         ModLoadingContext.get().registerExtensionPoint(DisplayTest.class,()->
-                new IExtensionPoint.DisplayTest(() -> FMLNetworkConstants.IGNORESERVERONLY,
+                new IExtensionPoint.DisplayTest(() -> NetworkConstants.IGNORESERVERONLY,
                         (remoteVersionString,networkBool) -> true));
     }
 
@@ -90,8 +90,7 @@ public class BlockHistory {
     public void onBlockPlace(final BlockEvent.EntityPlaceEvent event) {
         if(!event.getWorld().isClientSide()) {
             Entity entity = event.getEntity();
-            if(entity instanceof Player && !(entity instanceof FakePlayer)) {
-                Player player = (Player)entity;
+            if(entity instanceof Player player && !(entity instanceof FakePlayer)) {
 
                 String username = player.getName().getContents();
                 ChangeStorage changeData = new ChangeStorage(getDate(), username, "place", event.getPlacedBlock().getBlock().getRegistryName());
@@ -104,8 +103,7 @@ public class BlockHistory {
     public void onMultiBlockPlace(final BlockEvent.EntityMultiPlaceEvent event) {
         if(!event.getWorld().isClientSide()) {
             Entity entity = event.getEntity();
-            if(entity instanceof Player && !(entity instanceof FakePlayer)) {
-                Player player = (Player)entity;
+            if(entity instanceof Player player && !(entity instanceof FakePlayer)) {
 
                 for(BlockSnapshot snapshot : event.getReplacedBlockSnapshots()) {
                     String username = player.getName().getContents();
@@ -122,8 +120,7 @@ public class BlockHistory {
             Entity entity = event.getExplosion().getDamageSource().getEntity();
             if(entity != null) {
                 Level world = event.getWorld();
-                if(entity instanceof Player && !(entity instanceof FakePlayer)) {
-                    Player player = (Player)entity;
+                if(entity instanceof Player player && !(entity instanceof FakePlayer)) {
 
                     for(BlockPos position : event.getAffectedBlocks()) {
                         String username = player.getName().getContents();

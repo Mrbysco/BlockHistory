@@ -12,9 +12,8 @@ public class InventoryHelper {
 	public static NonNullList<ItemStack> getContainerInventory(AbstractContainerMenu container) {
 		int regularSlots = 0;
 		List<Slot> slots = container.slots;
-		for(int i = 0; i < slots.size(); i++) {
-			Slot slot = slots.get(i);
-			if(slot.container instanceof Inventory) {
+		for (Slot slot : slots) {
+			if (slot.container instanceof Inventory) {
 				break;
 			} else {
 				regularSlots++;

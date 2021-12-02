@@ -7,7 +7,7 @@ buildscript {
     }
     dependencies {
         classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '5.1.+', changing: true
-        classpath 'gradle.plugin.com.github.jengelman.gradle.plugins:shadow:7.0.0'
+        classpath "gradle.plugin.com.github.johnrengelman:shadow:7.1.0"
     }
 }
 apply plugin: 'net.minecraftforge.gradle'
@@ -19,7 +19,7 @@ version = "${version}"
 group = 'com.mrbysco.blockhistory' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = "Block-History-${mc_version}"
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(16) // Mojang ships Java 8 to end users, so your mod should target Java 8.
+java.toolchain.languageVersion = JavaLanguageVersion.of(17) // Mojang ships Java 8 to end users, so your mod should target Java 8.
 
 println('Java: ' + System.getProperty('java.version') + ' JVM: ' + System.getProperty('java.vm.version') + '(' + System.getProperty('java.vendor') + ') Arch: ' + System.getProperty('os.arch'))
 minecraft {

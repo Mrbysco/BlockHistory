@@ -44,8 +44,7 @@ public class LogHelper {
                 TranslatableComponent endComponent = new TranslatableComponent(" the inventory of block [%s]", change.resourceLocation.toString());
                 endComponent.withStyle(action.getColor());
 
-                Component logComponent = startComponent.append(changeComponent).append(endComponent);
-                return logComponent;
+                return startComponent.append(changeComponent).append(endComponent);
             } else {
                 TranslatableComponent fallBackComponent = new TranslatableComponent("At %s %s has %s the inventory of block [%s]", change.date, change.username, String.format(action.getNicerName(), "items"), change.resourceLocation.toString());
                 fallBackComponent.withStyle(action.getColor());
