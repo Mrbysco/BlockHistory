@@ -1,5 +1,6 @@
 package com.mrbysco.blockhistory;
 
+import com.mojang.logging.LogUtils;
 import com.mrbysco.blockhistory.command.HistoryCommands;
 import com.mrbysco.blockhistory.config.HistoryConfig;
 import com.mrbysco.blockhistory.helper.InventoryHelper;
@@ -32,8 +33,7 @@ import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLPaths;
 import net.minecraftforge.network.NetworkConstants;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
 import org.tmatesoft.sqljet.core.SqlJetException;
 
 import java.io.File;
@@ -48,7 +48,7 @@ import java.util.UUID;
 @Mod(BlockHistory.MOD_ID)
 public class BlockHistory {
     public static final String MOD_ID = "blockhistory";
-    public static final Logger LOGGER = LogManager.getLogger(MOD_ID);
+    public static final Logger LOGGER = LogUtils.getLogger();
     public static final File personalFolder = new File(FMLPaths.MODSDIR.get().toFile(), "/blockhistory");
 
     public BlockHistory() {

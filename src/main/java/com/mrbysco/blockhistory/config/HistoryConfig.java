@@ -59,6 +59,6 @@ public class HistoryConfig {
 
     @SubscribeEvent
     public static void onFileChange(final ModConfigEvent.Reloading configEvent) {
-        BlockHistory.LOGGER.fatal("Block History's config just got changed on the file system!");
+        BlockHistory.LOGGER.warn("Block History's config just got changed on the file system!");
     }
 }

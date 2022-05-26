@@ -50,7 +50,7 @@ public class InventoryHelper {
 					differenceList.set(i, ItemStack.EMPTY);
 				}
 			}
-			differenceList.removeIf(stack -> stack.isEmpty());
+			differenceList.removeIf(ItemStack::isEmpty);
 			return differenceList;
 		}
 		if(newCount > oldCount) {
@@ -61,7 +61,7 @@ public class InventoryHelper {
 					differenceList.set(i, ItemStack.EMPTY);
 				}
 			}
-			differenceList.removeIf(stack -> stack.isEmpty());
+			differenceList.removeIf(ItemStack::isEmpty);
 			return differenceList;
 		}
 
