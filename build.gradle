@@ -1,19 +1,8 @@
-buildscript {
-    repositories {
-        // These repositories are only for Gradle plugins, put any other repositories in the repository block further below
-        maven { url = 'https://maven.minecraftforge.net' }
-        mavenCentral()
-        gradlePluginPortal()
-    }
-    dependencies {
-        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '5.1.+', changing: true
-        classpath "gradle.plugin.com.github.johnrengelman:shadow:7.1.0"
-    }
+plugins {
+    id 'maven-publish'
+    id 'net.minecraftforge.gradle' version '5.+'
+    id 'com.github.johnrengelman.shadow' version '7.1.0'
 }
-apply plugin: 'net.minecraftforge.gradle'
-//Only edit below this line, the above code adds and enables the necessary things for Forge to be setup.
-apply plugin: 'com.github.johnrengelman.shadow'
-apply plugin: 'maven-publish'
 
 version = "${version}"
 group = 'com.mrbysco.blockhistory' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
