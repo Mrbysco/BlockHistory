@@ -21,8 +21,8 @@ import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.entity.player.PlayerContainerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
-import net.minecraftforge.event.world.BlockEvent;
-import net.minecraftforge.event.world.ExplosionEvent;
+import net.minecraftforge.event.level.BlockEvent;
+import net.minecraftforge.event.level.ExplosionEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.IExtensionPoint;
@@ -75,7 +75,7 @@ public class BlockHistory {
 
 	@SubscribeEvent(priority = EventPriority.HIGHEST)
 	public void onBlockBreak(final BlockEvent.BreakEvent event) {
-		if (!event.getWorld().isClientSide()) {
+		if (!event.getLevel().isClientSide()) {
 			Player player = event.getPlayer();
 			if (player != null && !(player instanceof FakePlayer)) {
 				String username = player.getName().getString();
@@ -87,7 +87,7 @@ public class BlockHistory {
 
 	@SubscribeEvent(priority = EventPriority.HIGHEST)
 	public void onBlockPlace(final BlockEvent.EntityPlaceEvent event) {
-		if (!event.getWorld().isClientSide()) {
+		if (!event.getLevel().isClientSide()) {
 			Entity entity = event.getEntity();
 			if (entity instanceof Player player && !(entity instanceof FakePlayer)) {
 
@@ -100,7 +100,7 @@ public class BlockHistory {
 
 	@SubscribeEvent(priority = EventPriority.HIGHEST)
 	public void onMultiBlockPlace(final BlockEvent.EntityMultiPlaceEvent event) {
-		if (!event.getWorld().isClientSide()) {
+		if (!event.getLevel().isClientSide()) {
 			Entity entity = event.getEntity();
 			if (entity instanceof Player player && !(entity instanceof FakePlayer)) {
 
@@ -115,12 +115,11 @@ public class BlockHistory {
 
 	@SubscribeEvent(priority = EventPriority.HIGHEST)
 	public void onExplosionEvent(final ExplosionEvent.Detonate event) {
-		if (!event.getWorld().isClientSide() && HistoryConfig.SERVER.storeExplosions.get()) {
+		if (!event.getLevel().isClientSide() && HistoryConfig.SERVER.storeExplosions.get()) {
 			Entity entity = event.getExplosion().getDamageSource().getEntity();
 			if (entity != null) {
-				Level world = event.getWorld();
+				final Level world = event.getLevel();
 				if (entity instanceof Player player && !(entity instanceof FakePlayer)) {
-
 					for (BlockPos position : event.getAffectedBlocks()) {
 						String username = player.getName().getString();
 						BlockState state = world.getBlockState(position);
@@ -130,8 +129,8 @@ public class BlockHistory {
 					}
 				} else {
 
-					if (ForgeRegistries.ENTITIES.getKey(entity.getType()) != null) {
-						String mobName = ForgeRegistries.ENTITIES.getKey(entity.getType()).toString();
+					if (ForgeRegistries.ENTITY_TYPES.getKey(entity.getType()) != null) {
+						String mobName = ForgeRegistries.ENTITY_TYPES.getKey(entity.getType()).toString();
 						for (BlockPos position : event.getAffectedBlocks()) {
 							BlockState state = world.getBlockState(position);
 							ResourceLocation resourceLoc = ForgeRegistries.BLOCKS.getKey(state.getBlock());
@@ -149,11 +148,11 @@ public class BlockHistory {
 
 	@SubscribeEvent(priority = EventPriority.HIGHEST)
 	public void onPlayerInteract(final PlayerInteractEvent.RightClickBlock event) {
-		if (!event.getWorld().isClientSide() && HistoryConfig.SERVER.storeContainerInteractions.get()) {
-			Player player = event.getPlayer();
+		if (!event.getLevel().isClientSide() && HistoryConfig.SERVER.storeContainerInteractions.get()) {
+			final Player player = event.getEntity();
 			if (player != null && !(player instanceof FakePlayer) && !player.isShiftKeyDown()) {
-				Level world = event.getWorld();
-				BlockPos position = event.getPos();
+				final Level world = event.getLevel();
+				final BlockPos position = event.getPos();
 				BlockState state = world.getBlockState(position);
 				if (state.getMenuProvider(world, position) != null) {
 					if (HistoryConfig.SERVER.storeContainerInventoryChanges.get()) {
@@ -169,7 +168,7 @@ public class BlockHistory {
 
 	@SubscribeEvent(priority = EventPriority.HIGHEST)
 	public void onPlayerContainerOpen(final PlayerContainerEvent.Open event) {
-		Player player = event.getPlayer();
+		final Player player = event.getEntity();
 		if (!player.getCommandSenderWorld().isClientSide() && HistoryConfig.SERVER.storeContainerInventoryChanges.get()) {
 			AbstractContainerMenu container = event.getContainer();
 			if (container.getItems().size() >= 1) {
@@ -180,12 +179,12 @@ public class BlockHistory {
 
 	@SubscribeEvent(priority = EventPriority.HIGHEST)
 	public void onPlayerContainerClose(final PlayerContainerEvent.Close event) {
-		Player player = event.getPlayer();
-		Level world = player.getCommandSenderWorld();
+		final Player player = event.getEntity();
+		final Level world = player.getCommandSenderWorld();
 		if (!world.isClientSide() && HistoryConfig.SERVER.storeContainerInventoryChanges.get()) {
-			UUID playerUUID = event.getPlayer().getUUID();
+			UUID playerUUID = player.getUUID();
 			NonNullList<ItemStack> oldInventory = CONTAINER_MAP.getOrDefault(playerUUID, null);
-			AbstractContainerMenu container = event.getContainer();
+			final AbstractContainerMenu container = event.getContainer();
 			if (CONTAINER_PLACE_MAP.containsKey(playerUUID) && oldInventory != null && container != null) {
 				NonNullList<ItemStack> currentInventory = InventoryHelper.getContainerInventory(container);
 				int oldCount = InventoryHelper.getItemCount(oldInventory);
