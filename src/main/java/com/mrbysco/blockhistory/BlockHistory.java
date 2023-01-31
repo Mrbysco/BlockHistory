@@ -64,9 +64,6 @@ public class BlockHistory {
 
 		MinecraftForge.EVENT_BUS.register(this);
 		MinecraftForge.EVENT_BUS.addListener(this::onCommandEvent);
-
-		//Make sure the mod being absent on the other network side does not cause the client to display the server as incompatible
-		ModLoadingContext.get().registerExtensionPoint(DisplayTest.class, () -> new IExtensionPoint.DisplayTest(() -> NetworkConstants.IGNORESERVERONLY, (remoteVersionString, networkBool) -> true));
 	}
 
 	public void onCommandEvent(RegisterCommandsEvent event) {
@@ -90,7 +87,6 @@ public class BlockHistory {
 		if (!event.getLevel().isClientSide()) {
 			Entity entity = event.getEntity();
 			if (entity instanceof Player player && !(entity instanceof FakePlayer)) {
-
 				String username = player.getName().getString();
 				ChangeStorage changeData = new ChangeStorage(getDate(), username, "place", ForgeRegistries.BLOCKS.getKey(event.getPlacedBlock().getBlock()));
 				UserHistoryDatabase.addHistory(event.getPos().asLong(), changeData);
@@ -103,7 +99,6 @@ public class BlockHistory {
 		if (!event.getLevel().isClientSide()) {
 			Entity entity = event.getEntity();
 			if (entity instanceof Player player && !(entity instanceof FakePlayer)) {
-
 				for (BlockSnapshot snapshot : event.getReplacedBlockSnapshots()) {
 					String username = player.getName().getString();
 					ChangeStorage changeData = new ChangeStorage(getDate(), username, "place", ForgeRegistries.BLOCKS.getKey(event.getPlacedBlock().getBlock()));

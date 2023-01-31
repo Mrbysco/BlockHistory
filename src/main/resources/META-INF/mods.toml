@@ -12,6 +12,8 @@ authors="Mrbysco"
 description='''
 Just storing block interactions
 '''
+displayTest="IGNORE_SERVER_VERSION"
+
 [[dependencies.blockhistory]]
 modId="minecraft"
 mandatory=true
