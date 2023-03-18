@@ -1,7 +1,6 @@
 plugins {
     id 'maven-publish'
     id 'net.minecraftforge.gradle' version '5.+'
-    id 'com.github.johnrengelman.shadow' version '7.1.0'
 }
 
 version = "${version}"
@@ -9,10 +8,11 @@ group = 'com.mrbysco.blockhistory' // http://maven.apache.org/guides/mini/guide-
 archivesBaseName = "Block-History-${mc_version}"
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(17) // Mojang ships Java 8 to end users, so your mod should target Java 8.
+jarJar.enable()
 
 println('Java: ' + System.getProperty('java.version') + ' JVM: ' + System.getProperty('java.vm.version') + '(' + System.getProperty('java.vendor') + ') Arch: ' + System.getProperty('os.arch'))
 minecraft {
-    mappings  channel: "${mcp_channel}", version: "${mcp_mappings}"
+    mappings channel: "${mcp_channel}", version: "${mcp_mappings}"
 
     accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
 
@@ -50,30 +50,6 @@ minecraft {
                 }
             }
         }
-
-        data {
-            workingDirectory project.file('run')
-
-            // Recommended logging data for a userdev environment
-            // property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
-
-            // Recommended logging level for the console
-            property 'forge.logging.console.level', 'debug'
-
-            args '--mod', 'blockhistory', '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
-
-            mods {
-                blockhistory {
-                    source sourceSets.main
-                }
-            }
-        }
-
-        all {
-            lazyToken('minecraft_classpath') {
-                configurations.shadow.copyRecursive().resolve().collect { it.absolutePath }.join(File.pathSeparator)
-            }
-        }
     }
 }
 
@@ -83,48 +59,54 @@ sourceSets.main.resources { srcDir 'src/generated/resources' }
 dependencies {
     minecraft "net.minecraftforge:forge:${mc_version}-${forge_version}"
 
-    implementation ("org.tmatesoft.sqljet:sqljet:${sqljet_version}")
-    shadow ("org.tmatesoft.sqljet:sqljet:${sqljet_version}")
+    minecraftLibrary("org.tmatesoft.sqljet:sqljet:${sqljet_version}") {
+        exclude group: 'org.antlr', module: 'ST4'
+        exclude group: 'org.antlr', module: 'stringtemplate'
+        exclude group: 'antlr', module: 'antlr'
+    }
+    jarJar(group: 'org.tmatesoft.sqljet', name: 'sqljet', version: "${sqljet_version}") {
+        jarJar.pin(it, "${sqljet_version}")
+        jarJar.ranged(it, "[${sqljet_version},1.2.0)")
+    }
+    jarJar(group: 'org.antlr', name: 'antlr-runtime', version: "3.4") {
+        jarJar.pin(it, "3.4")
+        jarJar.ranged(it, "[3.4,3.5)")
+        exclude group: 'org.antlr', module: 'ST4'
+        exclude group: 'org.antlr', module: 'stringtemplate'
+        exclude group: 'antlr', module: 'antlr'
+        transitive(false)
+    }
 }
-
-artifacts {
-    archives shadowJar
-}
-
-jar.finalizedBy('reobfJar')
-
-shadowJar {
-    project.configurations.shadow.setTransitive(true)
-    configurations = [project.configurations.shadow]
-
-    classifier ''
-}
-
-reobf {
-    shadowJar{}
-}
-
-build.dependsOn shadowJar
 
 jar {
     manifest {
         attributes([
-                "Specification-Title": "blockhistory",
-                "Specification-Vendor": "Mrbysco",
-                "Specification-Version": "1", // We are version 1 of ourselves
-                "Implementation-Title": project.name,
-                "Implementation-Version": "${version}",
-                "Implementation-Vendor" :"Mrbysco",
+                "Specification-Title"     : "blockhistory",
+                "Specification-Vendor"    : "Mrbysco",
+                "Specification-Version"   : "1", // We are version 1 of ourselves
+                "Implementation-Title"    : project.name,
+                "Implementation-Version"  : "${version}",
+                "Implementation-Vendor"   : "Mrbysco",
                 "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
         ])
     }
 }
 
-def reobfFile = file("$buildDir/reobfJar/output.jar")
+tasks.jarJar.configure {
+    classifier ''
+}
+
+jar.finalizedBy('reobfJar')
+
+reobf.create('jarJar')
+
+def reobfFile = file("$buildDir/reobfJarJar/output.jar")
 def reobfArtifact = artifacts.add('default', reobfFile) {
     type 'jar'
-    builtBy 'reobfJar'
+    builtBy 'reobfJarJar'
 }
+tasks.build.dependsOn tasks.jarJar
+tasks.jarJar.finalizedBy('reobfJarJar')
 publishing {
     publications {
         mavenJava(MavenPublication) {
