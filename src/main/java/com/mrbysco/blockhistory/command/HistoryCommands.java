@@ -32,7 +32,7 @@ public class HistoryCommands {
 		final BlockPos position = BlockPosArgument.getLoadedBlockPos(ctx, "pos");
 		List<ChangeStorage> storageList = UserHistoryDatabase.getHistory(position.asLong());
 		if (!storageList.isEmpty()) {
-			ctx.getSource().sendSuccess(Component.literal(String.format("History of X: %s, Y: %s, Z: %s",
+			ctx.getSource().sendSuccess(() -> Component.literal(String.format("History of X: %s, Y: %s, Z: %s",
 					(double) position.getX(), (double) position.getY(), (double) position.getZ())).withStyle(ChatFormatting.DARK_GREEN), true);
 
 			List<ChangeStorage> viewableList = new ArrayList<>(storageList);
@@ -41,11 +41,10 @@ public class HistoryCommands {
 				viewableList = storageList.subList(storageList.size() - maxInChat, storageList.size());
 			}
 			for (ChangeStorage change : viewableList) {
-				Component feedback = LogHelper.getLogText(change);
-				ctx.getSource().sendSuccess(feedback, true);
+				ctx.getSource().sendSuccess(() -> LogHelper.getLogText(change), true);
 			}
 		} else {
-			ctx.getSource().sendSuccess(Component.literal("No history is known for given location"), true);
+			ctx.getSource().sendSuccess(() -> Component.literal("No history is known for given location"), true);
 		}
 
 		return 0;
@@ -56,10 +55,10 @@ public class HistoryCommands {
 		List<ChangeStorage> storageList = UserHistoryDatabase.getHistory(position.asLong());
 		if (!storageList.isEmpty()) {
 			LogHelper.logHistoryToFile(storageList);
-			ctx.getSource().sendSuccess(Component.literal(String.format("History of X: %s, Y: %s, Z: %s has been saved to a log",
+			ctx.getSource().sendSuccess(() -> Component.literal(String.format("History of X: %s, Y: %s, Z: %s has been saved to a log",
 					(double) position.getX(), (double) position.getY(), (double) position.getZ())).withStyle(ChatFormatting.DARK_GREEN), true);
 		} else {
-			ctx.getSource().sendSuccess(Component.literal("No history is known for given location"), true);
+			ctx.getSource().sendSuccess(() -> Component.literal("No history is known for given location"), true);
 		}
 
 		return 0;

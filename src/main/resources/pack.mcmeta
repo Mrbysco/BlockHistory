@@ -1,8 +1,8 @@
 {
     "pack": {
-        "description": "Block History resources",
-        "pack_format": 12,
-        "forge:resource_pack_format": 12,
-        "forge:data_pack_format": 10
+        "description": {
+            "text": "Block History resources"
+        },
+        "pack_format": 15
     }
 }
