@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 
 public class UserHistoryDatabase {
 	private static SqlJetDb database;
@@ -71,12 +72,14 @@ public class UserHistoryDatabase {
 		try {
 //            BlockHistory.LOGGER.info(String.format("Block at position %s was %s by %s", BlockPos.fromLong(position), changes.change, changes.username));
 			Gson gson = new Gson();
+			//Check if the position is already in the database and add it if it isn't
 			if (!historyStored(position)) {
 				String changeData = gson.toJson(changes);
 				ArrayList<String> changeList = new ArrayList<>(Collections.singletonList(changeData));
 				storage.put(position, changeList);
 				storageTable.insert(position, gson.toJson(changeList));
 			} else {
+				//If it is in the database, add the change to the existing list
 				database.beginTransaction(SqlJetTransactionMode.WRITE);
 				ISqlJetCursor updateCursor = storageTable.lookup(storageTable.getPrimaryKeyIndexName(), position);
 				while (!updateCursor.eof()) {
@@ -100,6 +103,55 @@ public class UserHistoryDatabase {
 				updateCursor.close();
 				database.commit();
 			}
+		} catch (SqlJetException e) {
+			BlockHistory.LOGGER.error(e.getMessage());
+		}
+	}
+
+	/**
+	 * Adds multiple changes to the database at once to prevent multiple transactions
+	 *
+	 * @param changeMap A map of positions and changes to add
+	 */
+	public static void bulkAddHistory(Map<Long, ChangeStorage> changeMap) {
+		try {
+			Gson gson = new Gson();
+			database.beginTransaction(SqlJetTransactionMode.WRITE);
+			for (Map.Entry<Long, ChangeStorage> entry : changeMap.entrySet()) {
+				long position = entry.getKey();
+				ChangeStorage changes = entry.getValue();
+//				BlockHistory.LOGGER.info(String.format("Block at position %s was %s by %s", BlockPos.of(position), changes.change, changes.username));
+				//Check if the position is already in the database and add it if it isn't
+				if (!historyStored(position)) {
+					String changeData = gson.toJson(changes);
+					ArrayList<String> changeList = new ArrayList<>(Collections.singletonList(changeData));
+					storage.put(position, changeList);
+					storageTable.insert(position, gson.toJson(changeList));
+				} else {
+					//If it is in the database, add the change to the existing list
+					ISqlJetCursor updateCursor = storageTable.lookup(storageTable.getPrimaryKeyIndexName(), position);
+					while (!updateCursor.eof()) {
+						long foundPosition = updateCursor.getInteger("blockpos");
+						if (foundPosition == position) {
+							ArrayList<String> rawChangeStorage = new ArrayList<>(getRawHistory(position));
+							String changeData = gson.toJson(changes);
+							if (!changeData.isEmpty() && !rawChangeStorage.contains(changeData)) {
+								int maxStorage = HistoryConfig.SERVER.maxHistoryPerBlock.get();
+								if (rawChangeStorage.size() == maxStorage) {
+									rawChangeStorage = new ArrayList<>(rawChangeStorage.subList(rawChangeStorage.size() - (maxStorage - 1), rawChangeStorage.size()));
+								}
+								rawChangeStorage.add(changeData);
+							}
+							storage.put(position, rawChangeStorage);
+							updateCursor.update(position, gson.toJson(rawChangeStorage));
+							break;
+						}
+						updateCursor.next();
+					}
+					updateCursor.close();
+				}
+			}
+			database.commit();
 		} catch (SqlJetException e) {
 			BlockHistory.LOGGER.error(e.getMessage());
 		}
