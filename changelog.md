@@ -1,0 +1,1 @@
+* Bulk all explosion affected blocks changes into one call instead of individually adding them to the database
