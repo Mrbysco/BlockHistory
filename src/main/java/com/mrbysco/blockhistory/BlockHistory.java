@@ -121,23 +121,28 @@ public class BlockHistory {
 			if (entity != null) {
 				Level world = event.getWorld();
 				if (entity instanceof Player player && !(entity instanceof FakePlayer)) {
-
+					Map<Long, ChangeStorage> changeDataMap = new HashMap<>();
 					for (BlockPos position : event.getAffectedBlocks()) {
-						String username = player.getName().getContents();
+						String username = player.getName().getString();
 						BlockState state = world.getBlockState(position);
 						ResourceLocation resourceLoc = state.getBlock().getRegistryName();
 						ChangeStorage changeData = new ChangeStorage(getDate(), username, "explosion", resourceLoc != null ? resourceLoc : new ResourceLocation("minecraft", "air"));
-						UserHistoryDatabase.addHistory(position.asLong(), changeData);
+						changeDataMap.put(position.asLong(), changeData);
 					}
+					//Bulk the database insert to reduce the number of transactions
+					UserHistoryDatabase.bulkAddHistory(changeDataMap);
 				} else {
 					if (entity.getType().getRegistryName() != null) {
+						Map<Long, ChangeStorage> changeDataMap = new HashMap<>();
 						String mobName = entity.getType().getRegistryName().toString();
 						for (BlockPos position : event.getAffectedBlocks()) {
 							BlockState state = world.getBlockState(position);
 							ResourceLocation resourceLoc = state.getBlock().getRegistryName();
 							ChangeStorage changeData = new ChangeStorage(getDate(), mobName, "explosion", resourceLoc != null ? resourceLoc : new ResourceLocation("minecraft", "air"));
-							UserHistoryDatabase.addHistory(position.asLong(), changeData);
+							changeDataMap.put(position.asLong(), changeData);
 						}
+						//Bulk the database insert to reduce the number of transactions
+						UserHistoryDatabase.bulkAddHistory(changeDataMap);
 					}
 				}
 			}
