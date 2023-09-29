@@ -13,6 +13,7 @@ public class HistoryConfig {
 		public final BooleanValue storeExplosions;
 		public final BooleanValue storeContainerInteractions;
 		public final BooleanValue storeContainerInventoryChanges;
+		public final BooleanValue logToLog;
 		public final IntValue maxHistoryPerBlock;
 		public final IntValue maxHistoryInChat;
 
@@ -31,6 +32,10 @@ public class HistoryConfig {
 			storeContainerInventoryChanges = builder
 					.comment("Dictates if the mod stores inventory interactions made with blocks that have an inventory (for example a chest) [Default: true]")
 					.define("storeContainerInventoryChanges", true);
+
+			logToLog = builder
+					.comment("Dictates if the log command should log to `latest.log` [Default: false]")
+					.define("logToLog", false);
 
 			maxHistoryPerBlock = builder
 					.comment("The max amount of history stored per block [Default: " + Integer.MAX_VALUE + "]")

@@ -1,6 +1,7 @@
 package com.mrbysco.blockhistory.helper;
 
 import com.mrbysco.blockhistory.BlockHistory;
+import com.mrbysco.blockhistory.config.HistoryConfig;
 import com.mrbysco.blockhistory.storage.ChangeAction;
 import com.mrbysco.blockhistory.storage.ChangeStorage;
 import net.minecraft.ChatFormatting;
@@ -17,16 +18,26 @@ public class LogHelper {
 	public static File logFile = new File(BlockHistory.personalFolder, "log.txt");
 
 	public static void logHistoryToFile(List<ChangeStorage> storageList) {
-		try {
-			FileWriter fileWriter = new FileWriter(logFile, false);
+		if (HistoryConfig.SERVER.logToLog.get()) {
+			BlockHistory.LOGGER.info("Logging history:");
+			BlockHistory.LOGGER.info("###############");
 			for (ChangeStorage change : storageList) {
 				String changeTxt = getLogText(change).getContents();
-				fileWriter.write(changeTxt + "\n");
+				BlockHistory.LOGGER.info(changeTxt);
 			}
-			fileWriter.flush();
-			fileWriter.close();
-		} catch (IOException e) {
-			e.printStackTrace();
+			BlockHistory.LOGGER.info("###############");
+		} else {
+			try {
+				FileWriter fileWriter = new FileWriter(logFile, false);
+				for (ChangeStorage change : storageList) {
+					String changeTxt = getLogText(change).getContents();
+					fileWriter.write(changeTxt + "\n");
+				}
+				fileWriter.flush();
+				fileWriter.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 
