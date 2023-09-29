@@ -50,7 +50,7 @@ import java.util.UUID;
 public class BlockHistory {
 	public static final String MOD_ID = "blockhistory";
 	public static final Logger LOGGER = LogUtils.getLogger();
-	public static final File personalFolder = new File(FMLPaths.MODSDIR.get().toFile(), "/blockhistory");
+	public static final File personalFolder = new File(FMLPaths.MODSDIR.get().toFile(), "blockhistory");
 
 	public BlockHistory() {
 		try {
