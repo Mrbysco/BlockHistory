@@ -32,8 +32,8 @@ public class LogHelper {
 				for (ChangeStorage change : storageList) {
 					String changeTxt = getLogText(change).getContents();
 					fileWriter.write(changeTxt + "\n");
+					fileWriter.flush();
 				}
-				fileWriter.flush();
 				fileWriter.close();
 			} catch (IOException e) {
 				e.printStackTrace();
