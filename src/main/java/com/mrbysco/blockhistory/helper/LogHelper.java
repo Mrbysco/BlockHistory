@@ -14,7 +14,7 @@ import java.io.IOException;
 import java.util.List;
 
 public class LogHelper {
-	public static File logFile = new File(BlockHistory.personalFolder, "/log.txt");
+	public static File logFile = new File(BlockHistory.personalFolder, "log.txt");
 
 	public static void logHistoryToFile(List<ChangeStorage> storageList) {
 		try {
@@ -23,6 +23,7 @@ public class LogHelper {
 				String changeTxt = getLogText(change).getContents();
 				fileWriter.write(changeTxt + "\n");
 			}
+			fileWriter.flush();
 			fileWriter.close();
 		} catch (IOException e) {
 			e.printStackTrace();
