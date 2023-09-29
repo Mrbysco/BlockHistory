@@ -6,8 +6,8 @@ import com.mrbysco.blockhistory.storage.ChangeAction;
 import com.mrbysco.blockhistory.storage.ChangeStorage;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.TextComponent;
-import net.minecraft.network.chat.TranslatableComponent;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -45,25 +45,25 @@ public class LogHelper {
 		ChangeAction action = ChangeAction.getAction(change.change);
 		if (action == ChangeAction.INVENTORY_INSERTION || action == ChangeAction.INVENTORY_WITHDRAWAL) {
 			if (change.extraData != null && !change.extraData.isEmpty()) {
-				TranslatableComponent startComponent = new TranslatableComponent("At %s %s has ", change.date, change.username);
+				MutableComponent startComponent = new TextComponent(String.format("At %s %s has ", change.date, change.username));
 				startComponent.withStyle(action.getColor());
 
 				TextComponent changeListComponent = new TextComponent(change.extraData);
 				changeListComponent.withStyle(ChatFormatting.WHITE);
-				TranslatableComponent changeComponent = new TranslatableComponent(action.getNicerName(), changeListComponent);
+				MutableComponent changeComponent = new TextComponent(String.format(action.getNicerName(), changeListComponent));
 				changeComponent.withStyle(action.getColor());
 
-				TranslatableComponent endComponent = new TranslatableComponent(" the inventory of block [%s]", change.resourceLocation.toString());
+				MutableComponent endComponent = new TextComponent(String.format(" the inventory of block [%s]", change.resourceLocation.toString()));
 				endComponent.withStyle(action.getColor());
 
 				return startComponent.append(changeComponent).append(endComponent);
 			} else {
-				TranslatableComponent fallBackComponent = new TranslatableComponent("At %s %s has %s the inventory of block [%s]", change.date, change.username, String.format(action.getNicerName(), "items"), change.resourceLocation.toString());
+				MutableComponent fallBackComponent = new TextComponent(String.format("At %s %s has %s the inventory of block [%s]", change.date, change.username, String.format(action.getNicerName(), "items"), change.resourceLocation.toString()));
 				fallBackComponent.withStyle(action.getColor());
 				return fallBackComponent;
 			}
 		} else {
-			TranslatableComponent logComponent = new TranslatableComponent("At %s %s has %s a block [%s]", change.date, change.username, action.getNicerName(), change.resourceLocation.toString());
+			MutableComponent logComponent = new TextComponent(String.format("At %s %s has %s a block [%s]", change.date, change.username, action.getNicerName(), change.resourceLocation.toString()));
 			logComponent.withStyle(action.getColor());
 			return logComponent;
 		}
