@@ -30,7 +30,7 @@ public class LogHelper {
 			try {
 				FileWriter fileWriter = new FileWriter(logFile, false);
 				for (ChangeStorage change : storageList) {
-					String changeTxt = getLogText(change).getContents();
+					String changeTxt = getLogText(change).getString();
 					fileWriter.write(changeTxt + "\n");
 					fileWriter.flush();
 				}
@@ -45,27 +45,19 @@ public class LogHelper {
 		ChangeAction action = ChangeAction.getAction(change.change);
 		if (action == ChangeAction.INVENTORY_INSERTION || action == ChangeAction.INVENTORY_WITHDRAWAL) {
 			if (change.extraData != null && !change.extraData.isEmpty()) {
-				MutableComponent startComponent = new TextComponent(String.format("At %s %s has ", change.date, change.username));
-				startComponent.withStyle(action.getColor());
+				MutableComponent startComponent = new TextComponent(String.format("At %s %s has ", change.date, change.username)).withStyle(action.getColor());
 
-				TextComponent changeListComponent = new TextComponent(change.extraData);
-				changeListComponent.withStyle(ChatFormatting.WHITE);
-				MutableComponent changeComponent = new TextComponent(String.format(action.getNicerName(), changeListComponent));
-				changeComponent.withStyle(action.getColor());
+				MutableComponent changeListComponent = new TextComponent(change.extraData).withStyle(ChatFormatting.WHITE);
+				MutableComponent changeComponent = new TextComponent(String.format(action.getNicerName(), changeListComponent.getString())).withStyle(action.getColor());
 
-				MutableComponent endComponent = new TextComponent(String.format(" the inventory of block [%s]", change.resourceLocation.toString()));
-				endComponent.withStyle(action.getColor());
+				MutableComponent endComponent = new TextComponent(String.format(" the inventory of block [%s]", change.resourceLocation.toString())).withStyle(action.getColor());
 
 				return startComponent.append(changeComponent).append(endComponent);
 			} else {
-				MutableComponent fallBackComponent = new TextComponent(String.format("At %s %s has %s the inventory of block [%s]", change.date, change.username, String.format(action.getNicerName(), "items"), change.resourceLocation.toString()));
-				fallBackComponent.withStyle(action.getColor());
-				return fallBackComponent;
+				return new TextComponent(String.format("At %s %s has %s the inventory of block [%s]", change.date, change.username, String.format(action.getNicerName(), "items"), change.resourceLocation.toString())).withStyle(action.getColor());
 			}
 		} else {
-			MutableComponent logComponent = new TextComponent(String.format("At %s %s has %s a block [%s]", change.date, change.username, action.getNicerName(), change.resourceLocation.toString()));
-			logComponent.withStyle(action.getColor());
-			return logComponent;
+			return new TextComponent(String.format("At %s %s has %s a block [%s]", change.date, change.username, action.getNicerName(), change.resourceLocation.toString())).withStyle(action.getColor());
 		}
 	}
 }
