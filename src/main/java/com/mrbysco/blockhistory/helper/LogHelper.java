@@ -13,7 +13,7 @@ import java.io.IOException;
 import java.util.List;
 
 public class LogHelper {
-	public static final File logFile = new File(BlockHistory.personalFolder, "/log.txt");
+	public static final File logFile = new File(BlockHistory.personalFolder, "log.txt");
 
 	public static void logHistoryToFile(List<ChangeStorage> storageList) {
 		if (HistoryConfig.SERVER.logToLog.get()) {
