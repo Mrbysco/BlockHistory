@@ -1,1 +1,3 @@
-* Bulk all explosion affected blocks changes into one call instead of individually adding them to the database
+* Fix extract/insert message displaying funky in chat
+* Fixed logging to file
+* Add a config option to log to **latest.log** file
