@@ -16,15 +16,25 @@ public class LogHelper {
 	public static final File logFile = new File(BlockHistory.personalFolder, "/log.txt");
 
 	public static void logHistoryToFile(List<ChangeStorage> storageList) {
-		try {
-			FileWriter fileWriter = new FileWriter(logFile, false);
+		if (HistoryConfig.SERVER.logToLog.get()) {
+			BlockHistory.LOGGER.info("Logging history:");
+			BlockHistory.LOGGER.info("###############");
 			for (ChangeStorage change : storageList) {
-				String changeTxt = getLogText(change).getString();
-				fileWriter.write(changeTxt + "\n");
+				String changeTxt = getLogText(change).getContents();
+				BlockHistory.LOGGER.info(changeTxt);
 			}
-			fileWriter.close();
-		} catch (IOException e) {
-			e.printStackTrace();
+			BlockHistory.LOGGER.info("###############");
+		} else {
+			try {
+				FileWriter fileWriter = new FileWriter(logFile, false);
+				for (ChangeStorage change : storageList) {
+					String changeTxt = getLogText(change).getString();
+					fileWriter.write(changeTxt + "\n");
+				}
+				fileWriter.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 
