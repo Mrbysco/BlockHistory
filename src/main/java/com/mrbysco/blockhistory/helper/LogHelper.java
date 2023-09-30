@@ -22,7 +22,7 @@ public class LogHelper {
 			BlockHistory.LOGGER.info("Logging history:");
 			BlockHistory.LOGGER.info("###############");
 			for (ChangeStorage change : storageList) {
-				String changeTxt = getLogText(change).getContents();
+				String changeTxt = getLogText(change).getString();
 				BlockHistory.LOGGER.info(changeTxt);
 			}
 			BlockHistory.LOGGER.info("###############");
