@@ -1,3 +1,2 @@
-* Fix extract/insert message displaying funky in chat
-* Fixed logging to file
-* Add a config option to log to **latest.log** file
+* Add a dimension whitelist to the config
+* Add a config to limit the amount of days Block History stores data for
