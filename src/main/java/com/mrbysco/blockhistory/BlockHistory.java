@@ -83,7 +83,7 @@ public class BlockHistory {
 	public void onBlockBreak(final BlockEvent.BreakEvent event) {
 		if (!event.getLevel().isClientSide()) {
 			Player player = event.getPlayer();
-			Level level = player.level();
+			Level level = player.getLevel();
 			if (matchesWhitelist(level) && player != null && !(player instanceof FakePlayer)) {
 				String username = player.getName().getString();
 				ChangeStorage changeData = new ChangeStorage(getDate(), username, "break", ForgeRegistries.BLOCKS.getKey(event.getState().getBlock()));
@@ -96,7 +96,7 @@ public class BlockHistory {
 	public void onBlockPlace(final BlockEvent.EntityPlaceEvent event) {
 		if (!event.getLevel().isClientSide()) {
 			Entity entity = event.getEntity();
-			Level level = entity.level();
+			Level level = entity.getLevel();
 			if (matchesWhitelist(level) && entity instanceof Player player && !(entity instanceof FakePlayer)) {
 				String username = player.getName().getString();
 				ChangeStorage changeData = new ChangeStorage(getDate(), username, "place", ForgeRegistries.BLOCKS.getKey(event.getPlacedBlock().getBlock()));
@@ -109,7 +109,7 @@ public class BlockHistory {
 	public void onMultiBlockPlace(final BlockEvent.EntityMultiPlaceEvent event) {
 		if (!event.getLevel().isClientSide()) {
 			Entity entity = event.getEntity();
-			Level level = entity.level();
+			Level level = entity.getLevel();
 			if (matchesWhitelist(level) && entity instanceof Player player && !(entity instanceof FakePlayer)) {
 				for (BlockSnapshot snapshot : event.getReplacedBlockSnapshots()) {
 					String username = player.getName().getString();
@@ -183,10 +183,10 @@ public class BlockHistory {
 	@SubscribeEvent(priority = EventPriority.HIGHEST)
 	public void onPlayerContainerOpen(final PlayerContainerEvent.Open event) {
 		final Player player = event.getEntity();
-		final Level level = player.level();
+		final Level level = player.getLevel();
 		if (!level.isClientSide() && matchesWhitelist(level) && HistoryConfig.SERVER.storeContainerInventoryChanges.get()) {
 			AbstractContainerMenu container = event.getContainer();
-			if (container.getItems().size() >= 1) {
+			if (!container.getItems().isEmpty()) {
 				CONTAINER_MAP.put(player.getUUID(), InventoryHelper.getContainerInventory(container));
 			}
 		}
@@ -195,7 +195,7 @@ public class BlockHistory {
 	@SubscribeEvent(priority = EventPriority.HIGHEST)
 	public void onPlayerContainerClose(final PlayerContainerEvent.Close event) {
 		final Player player = event.getEntity();
-		final Level level = player.level();
+		final Level level = player.getLevel();
 		if (!level.isClientSide() && matchesWhitelist(level) && HistoryConfig.SERVER.storeContainerInventoryChanges.get()) {
 			UUID playerUUID = player.getUUID();
 			NonNullList<ItemStack> oldInventory = CONTAINER_MAP.getOrDefault(playerUUID, null);
