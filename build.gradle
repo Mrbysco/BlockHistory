@@ -132,7 +132,7 @@ publishing {
         mavenJava(MavenPublication) {
             artifact(reobfArtifact) {
                 builtBy reobfArtifact
-                artifactId = archivesBaseName
+                artifactId = base.archivesName.get()
                 classifier null
             }
         }
