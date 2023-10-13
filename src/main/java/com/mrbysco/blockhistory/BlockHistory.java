@@ -71,7 +71,8 @@ public class BlockHistory {
 	public void onBlockBreak(final BlockEvent.BreakEvent event) {
 		if (!event.getLevel().isClientSide()) {
 			Player player = event.getPlayer();
-			if (player != null && !(player instanceof FakePlayer)) {
+			Level level = player.level();
+			if (matchesWhitelist(level) && player != null && !(player instanceof FakePlayer)) {
 				String username = player.getName().getString();
 				ChangeStorage changeData = new ChangeStorage(getDate(), username, "break", ForgeRegistries.BLOCKS.getKey(event.getState().getBlock()));
 				UserHistoryDatabase.addHistory(event.getPos().asLong(), changeData);
@@ -83,7 +84,8 @@ public class BlockHistory {
 	public void onBlockPlace(final BlockEvent.EntityPlaceEvent event) {
 		if (!event.getLevel().isClientSide()) {
 			Entity entity = event.getEntity();
-			if (entity instanceof Player player && !(entity instanceof FakePlayer)) {
+			Level level = entity.level();
+			if (matchesWhitelist(level) && entity instanceof Player player && !(entity instanceof FakePlayer)) {
 				String username = player.getName().getString();
 				ChangeStorage changeData = new ChangeStorage(getDate(), username, "place", ForgeRegistries.BLOCKS.getKey(event.getPlacedBlock().getBlock()));
 				UserHistoryDatabase.addHistory(event.getPos().asLong(), changeData);
@@ -95,7 +97,8 @@ public class BlockHistory {
 	public void onMultiBlockPlace(final BlockEvent.EntityMultiPlaceEvent event) {
 		if (!event.getLevel().isClientSide()) {
 			Entity entity = event.getEntity();
-			if (entity instanceof Player player && !(entity instanceof FakePlayer)) {
+			Level level = entity.level();
+			if (matchesWhitelist(level) && entity instanceof Player player && !(entity instanceof FakePlayer)) {
 				for (BlockSnapshot snapshot : event.getReplacedBlockSnapshots()) {
 					String username = player.getName().getString();
 					ChangeStorage changeData = new ChangeStorage(getDate(), username, "place", ForgeRegistries.BLOCKS.getKey(event.getPlacedBlock().getBlock()));
@@ -110,12 +113,14 @@ public class BlockHistory {
 		if (!event.getLevel().isClientSide() && HistoryConfig.SERVER.storeExplosions.get()) {
 			Entity entity = event.getExplosion().getDamageSource().getEntity();
 			if (entity != null) {
-				final Level world = event.getLevel();
+				final Level level = event.getLevel();
+				if (!matchesWhitelist(level))
+					return;
 				if (entity instanceof Player player && !(entity instanceof FakePlayer)) {
 					Map<Long, ChangeStorage> changeDataMap = new HashMap<>();
 					for (BlockPos position : event.getAffectedBlocks()) {
 						String username = player.getName().getString();
-						BlockState state = world.getBlockState(position);
+						BlockState state = level.getBlockState(position);
 						ResourceLocation resourceLoc = ForgeRegistries.BLOCKS.getKey(state.getBlock());
 						ChangeStorage changeData = new ChangeStorage(getDate(), username, "explosion", resourceLoc != null ? resourceLoc : new ResourceLocation("minecraft", "air"));
 						changeDataMap.put(position.asLong(), changeData);
@@ -127,7 +132,7 @@ public class BlockHistory {
 						Map<Long, ChangeStorage> changeDataMap = new HashMap<>();
 						String mobName = ForgeRegistries.ENTITY_TYPES.getKey(entity.getType()).toString();
 						for (BlockPos position : event.getAffectedBlocks()) {
-							BlockState state = world.getBlockState(position);
+							BlockState state = level.getBlockState(position);
 							ResourceLocation resourceLoc = ForgeRegistries.BLOCKS.getKey(state.getBlock());
 							ChangeStorage changeData = new ChangeStorage(getDate(), mobName, "explosion", resourceLoc != null ? resourceLoc : new ResourceLocation("minecraft", "air"));
 							changeDataMap.put(position.asLong(), changeData);
@@ -148,10 +153,10 @@ public class BlockHistory {
 		if (!event.getLevel().isClientSide() && HistoryConfig.SERVER.storeContainerInteractions.get()) {
 			final Player player = event.getEntity();
 			if (player != null && !(player instanceof FakePlayer) && !player.isShiftKeyDown()) {
-				final Level world = event.getLevel();
+				final Level level = event.getLevel();
 				final BlockPos position = event.getPos();
-				BlockState state = world.getBlockState(position);
-				if (state.getMenuProvider(world, position) != null) {
+				BlockState state = level.getBlockState(position);
+				if (matchesWhitelist(level) && state.getMenuProvider(level, position) != null) {
 					if (HistoryConfig.SERVER.storeContainerInventoryChanges.get()) {
 						CONTAINER_PLACE_MAP.put(player.getUUID(), position.asLong());
 					}
@@ -166,7 +171,8 @@ public class BlockHistory {
 	@SubscribeEvent(priority = EventPriority.HIGHEST)
 	public void onPlayerContainerOpen(final PlayerContainerEvent.Open event) {
 		final Player player = event.getEntity();
-		if (!player.getCommandSenderWorld().isClientSide() && HistoryConfig.SERVER.storeContainerInventoryChanges.get()) {
+		final Level level = player.level();
+		if (!level.isClientSide() && matchesWhitelist(level) && HistoryConfig.SERVER.storeContainerInventoryChanges.get()) {
 			AbstractContainerMenu container = event.getContainer();
 			if (container.getItems().size() >= 1) {
 				CONTAINER_MAP.put(player.getUUID(), InventoryHelper.getContainerInventory(container));
@@ -177,8 +183,8 @@ public class BlockHistory {
 	@SubscribeEvent(priority = EventPriority.HIGHEST)
 	public void onPlayerContainerClose(final PlayerContainerEvent.Close event) {
 		final Player player = event.getEntity();
-		final Level world = player.getCommandSenderWorld();
-		if (!world.isClientSide() && HistoryConfig.SERVER.storeContainerInventoryChanges.get()) {
+		final Level level = player.level();
+		if (!level.isClientSide() && matchesWhitelist(level) && HistoryConfig.SERVER.storeContainerInventoryChanges.get()) {
 			UUID playerUUID = player.getUUID();
 			NonNullList<ItemStack> oldInventory = CONTAINER_MAP.getOrDefault(playerUUID, null);
 			final AbstractContainerMenu container = event.getContainer();
@@ -190,7 +196,7 @@ public class BlockHistory {
 					NonNullList<ItemStack> differenceList = InventoryHelper.getInventoryChange(oldInventory, currentInventory);
 					String username = player.getName().getString();
 					BlockPos position = BlockPos.of(CONTAINER_PLACE_MAP.get(playerUUID));
-					ResourceLocation location = ForgeRegistries.BLOCKS.getKey(world.getBlockState(position).getBlock());
+					ResourceLocation location = ForgeRegistries.BLOCKS.getKey(level.getBlockState(position).getBlock());
 					ChangeStorage changeData = null;
 					if (newCount < oldCount) {
 						changeData = new ChangeStorage(getDate(), username, "inventory_withdrawal", location, differenceList.toString());
@@ -213,5 +219,12 @@ public class BlockHistory {
 		Date date = Calendar.getInstance().getTime();
 		DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
 		return dateFormat.format(date);
+	}
+
+	public boolean matchesWhitelist(Level level) {
+		if (HistoryConfig.SERVER.whitelistEnabled.get()) {
+			return HistoryConfig.SERVER.whitelist.get().contains(level.dimension().location().toString());
+		}
+		return true;
 	}
 }

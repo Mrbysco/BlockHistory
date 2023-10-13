@@ -8,6 +8,8 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.event.config.ModConfigEvent;
 import org.apache.commons.lang3.tuple.Pair;
 
+import java.util.List;
+
 public class HistoryConfig {
 	public static class Server {
 		public final BooleanValue storeExplosions;
@@ -16,6 +18,8 @@ public class HistoryConfig {
 		public final BooleanValue logToLog;
 		public final IntValue maxHistoryPerBlock;
 		public final IntValue maxHistoryInChat;
+		public final BooleanValue whitelistEnabled;
+		public final ForgeConfigSpec.ConfigValue<List<? extends String>> whitelist;
 
 		Server(ForgeConfigSpec.Builder builder) {
 			builder.comment("Logging settings")
@@ -44,6 +48,14 @@ public class HistoryConfig {
 			maxHistoryInChat = builder
 					.comment("The max amount of history stored per block [Default: 10]")
 					.defineInRange("maxHistoryInChat", 10, 1, 200);
+
+			whitelistEnabled = builder
+					.comment("Dictates if the whitelist should be used [Default: false]")
+					.define("whitelistEnabled", false);
+
+			whitelist = builder
+					.comment("The whitelist of dimensions to log in [Default: [\"minecraft:overworld\", \"minecraft:the_nether\", \"minecraft:the_end\"]]")
+					.defineListAllowEmpty(List.of("whitelist"), () -> List.of("minecraft:overworld", "minecraft:the_nether", "minecraft:the_end"), o -> o instanceof String);
 
 			builder.pop();
 		}
