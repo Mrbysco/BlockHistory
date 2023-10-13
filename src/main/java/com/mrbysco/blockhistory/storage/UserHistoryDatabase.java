@@ -13,9 +13,14 @@ import org.tmatesoft.sqljet.core.table.SqlJetDb;
 
 import java.io.File;
 import java.lang.reflect.Type;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -178,5 +183,54 @@ public class UserHistoryDatabase {
 			rawChangeData = new ArrayList<>(storage.get(position));
 		}
 		return rawChangeData;
+	}
+
+	public static void removeHistory(int days) {
+		if (days > 0) {
+			try {
+				final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+
+				//Iterate over the database and remove all entries that are older than the set amount of days
+				database.beginTransaction(SqlJetTransactionMode.WRITE);
+				ISqlJetCursor cursor = storageTable.open();
+				while (!cursor.eof()) {
+					long position = cursor.getInteger("blockpos");
+					List<String> rawChangeData = getRawHistory(position);
+					if (!rawChangeData.isEmpty()) {
+						List<String> removeList = new ArrayList<>();
+						for (String rawChangeDatum : rawChangeData) {
+							Gson gson = new Gson();
+							ChangeStorage storage = gson.fromJson(rawChangeDatum, ChangeStorage.class);
+							try {
+								Date changeDate = dateFormat.parse(storage.date);
+								Date date = Calendar.getInstance().getTime();
+								//Check if the changeDate is older than 7 days
+								if (date.getTime() - changeDate.getTime() > (long) days * 24 * 60 * 60 * 1000) {
+									BlockHistory.LOGGER.error("Removing data for block at position " + position + " as it's older than " + days + " days");
+									removeList.add(rawChangeDatum);
+								}
+							} catch (ParseException e) {
+								e.printStackTrace();
+							}
+						}
+						if (!removeList.isEmpty()) {
+							rawChangeData.removeAll(removeList);
+							if (rawChangeData.isEmpty()) {
+								storage.remove(position);
+								cursor.delete();
+							} else {
+								storage.put(position, new ArrayList<>(rawChangeData));
+								storageTable.insert(position, new Gson().toJson(rawChangeData));
+							}
+						}
+					}
+					cursor.next();
+				}
+				cursor.close();
+				database.commit();
+			} catch (SqlJetException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 }
