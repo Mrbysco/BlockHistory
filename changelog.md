@@ -1,1 +1,2 @@
-* Fix logging to **latest.log** not logging some stuff
+* Add a dimension whitelist to the config
+* Add a config to limit the amount of days Block History stores data for
