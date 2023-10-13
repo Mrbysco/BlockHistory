@@ -23,6 +23,7 @@ import net.minecraftforge.event.entity.player.PlayerContainerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.level.BlockEvent;
 import net.minecraftforge.event.level.ExplosionEvent;
+import net.minecraftforge.event.server.ServerStartedEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.IExtensionPoint;
@@ -71,6 +72,11 @@ public class BlockHistory {
 
 	public void onCommandEvent(RegisterCommandsEvent event) {
 		HistoryCommands.initializeCommands(event.getDispatcher());
+	}
+
+	@SubscribeEvent(priority = EventPriority.HIGHEST)
+	public void onServerStart(final ServerStartedEvent event) {
+		UserHistoryDatabase.removeHistory(HistoryConfig.SERVER.removeOlderThanDays.get());
 	}
 
 	@SubscribeEvent(priority = EventPriority.HIGHEST)
