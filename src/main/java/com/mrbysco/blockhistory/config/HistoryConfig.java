@@ -20,6 +20,7 @@ public class HistoryConfig {
 		public final IntValue maxHistoryInChat;
 		public final BooleanValue whitelistEnabled;
 		public final ForgeConfigSpec.ConfigValue<List<? extends String>> whitelist;
+		public final IntValue removeOlderThanDays;
 
 		Server(ForgeConfigSpec.Builder builder) {
 			builder.comment("Logging settings")
@@ -56,6 +57,10 @@ public class HistoryConfig {
 			whitelist = builder
 					.comment("The whitelist of dimensions to log in [Default: [\"minecraft:overworld\", \"minecraft:the_nether\", \"minecraft:the_end\"]]")
 					.defineListAllowEmpty(List.of("whitelist"), () -> List.of("minecraft:overworld", "minecraft:the_nether", "minecraft:the_end"), o -> o instanceof String);
+
+			removeOlderThanDays = builder
+					.comment("The amount of days to keep history for (0 = Don't delete) [Default: 0]")
+					.defineInRange("removeOlderThanDays", 0, 0, Integer.MAX_VALUE);
 
 			builder.pop();
 		}
