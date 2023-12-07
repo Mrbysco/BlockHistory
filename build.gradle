@@ -102,6 +102,8 @@ jar {
     }
 }
 
+
+
 tasks.jarJar.configure {
     archiveClassifier.set("")
 }
@@ -115,6 +117,7 @@ publishing {
     publications {
         register('mavenJava', MavenPublication) {
             groupId project.group
+            artifact project.tasks.jarJar
             artifactId base.archivesName.get()
             version project.version
             from components.java
@@ -137,7 +140,7 @@ if (System.getenv().CURSEFORGE_KEY) {
     task curseforge(type: net.darkhax.curseforgegradle.TaskPublishCurseForge) {
         apiToken = System.getenv().CURSEFORGE_KEY
 
-        def mainFile = upload(project.curseforge_id, jar)
+        def mainFile = upload(project.curseforge_id, project.tasks.jarJar)
         mainFile.releaseType = 'beta'
         mainFile.addGameVersion "NeoForge"
         mainFile.addGameVersion "${mc_version}"
@@ -158,7 +161,7 @@ if (System.getenv().MODRINTH_KEY) {
         versionType = "beta"
         versionName = "${mod_name} ${mc_version}"
         versionNumber = project.version
-        uploadFile = jar
+        uploadFile = project.tasks.jarJar
         changelog = file("$project.rootDir/changelog.md").text
         gameVersions = ["${mc_version}"]
         loaders = ["neoforge"]
