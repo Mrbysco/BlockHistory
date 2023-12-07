@@ -8,6 +8,7 @@ import com.mrbysco.blockhistory.storage.ChangeStorage;
 import com.mrbysco.blockhistory.storage.UserHistoryDatabase;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -15,26 +16,25 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.common.util.BlockSnapshot;
-import net.minecraftforge.common.util.FakePlayer;
-import net.minecraftforge.event.RegisterCommandsEvent;
-import net.minecraftforge.event.entity.player.PlayerContainerEvent;
-import net.minecraftforge.event.entity.player.PlayerInteractEvent;
-import net.minecraftforge.event.level.BlockEvent;
-import net.minecraftforge.event.level.ExplosionEvent;
-import net.minecraftforge.event.server.ServerStartedEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.IExtensionPoint;
-import net.minecraftforge.fml.IExtensionPoint.DisplayTest;
-import net.minecraftforge.fml.ModLoadingContext;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.config.ModConfig;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.fml.loading.FMLPaths;
-import net.minecraftforge.network.NetworkConstants;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.IExtensionPoint;
+import net.neoforged.fml.IExtensionPoint.DisplayTest;
+import net.neoforged.fml.ModLoadingContext;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.config.ModConfig;
+import net.neoforged.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.neoforged.fml.loading.FMLPaths;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.common.util.BlockSnapshot;
+import net.neoforged.neoforge.common.util.FakePlayer;
+import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerContainerEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
+import net.neoforged.neoforge.event.level.BlockEvent;
+import net.neoforged.neoforge.event.level.ExplosionEvent;
+import net.neoforged.neoforge.event.server.ServerStartedEvent;
+import net.neoforged.neoforge.network.NetworkConstants;
 import org.slf4j.Logger;
 import org.tmatesoft.sqljet.core.SqlJetException;
 
@@ -63,8 +63,8 @@ public class BlockHistory {
 		ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, HistoryConfig.serverSpec);
 		FMLJavaModLoadingContext.get().getModEventBus().register(HistoryConfig.class);
 
-		MinecraftForge.EVENT_BUS.register(this);
-		MinecraftForge.EVENT_BUS.addListener(this::onCommandEvent);
+		NeoForge.EVENT_BUS.register(this);
+		NeoForge.EVENT_BUS.addListener(this::onCommandEvent);
 
 		//Make sure the mod being absent on the other network side does not cause the client to display the server as incompatible
 		ModLoadingContext.get().registerExtensionPoint(DisplayTest.class, () -> new IExtensionPoint.DisplayTest(() -> NetworkConstants.IGNORESERVERONLY, (remoteVersionString, networkBool) -> true));
@@ -86,7 +86,7 @@ public class BlockHistory {
 			Level level = player.level();
 			if (matchesWhitelist(level) && player != null && !(player instanceof FakePlayer)) {
 				String username = player.getName().getString();
-				ChangeStorage changeData = new ChangeStorage(getDate(), username, "break", ForgeRegistries.BLOCKS.getKey(event.getState().getBlock()));
+				ChangeStorage changeData = new ChangeStorage(getDate(), username, "break", BuiltInRegistries.BLOCK.getKey(event.getState().getBlock()));
 				UserHistoryDatabase.addHistory(event.getPos().asLong(), changeData);
 			}
 		}
@@ -99,7 +99,7 @@ public class BlockHistory {
 			Level level = entity.level();
 			if (matchesWhitelist(level) && entity instanceof Player player && !(entity instanceof FakePlayer)) {
 				String username = player.getName().getString();
-				ChangeStorage changeData = new ChangeStorage(getDate(), username, "place", ForgeRegistries.BLOCKS.getKey(event.getPlacedBlock().getBlock()));
+				ChangeStorage changeData = new ChangeStorage(getDate(), username, "place", BuiltInRegistries.BLOCK.getKey(event.getPlacedBlock().getBlock()));
 				UserHistoryDatabase.addHistory(event.getPos().asLong(), changeData);
 			}
 		}
@@ -113,7 +113,7 @@ public class BlockHistory {
 			if (matchesWhitelist(level) && entity instanceof Player player && !(entity instanceof FakePlayer)) {
 				for (BlockSnapshot snapshot : event.getReplacedBlockSnapshots()) {
 					String username = player.getName().getString();
-					ChangeStorage changeData = new ChangeStorage(getDate(), username, "place", ForgeRegistries.BLOCKS.getKey(event.getPlacedBlock().getBlock()));
+					ChangeStorage changeData = new ChangeStorage(getDate(), username, "place", BuiltInRegistries.BLOCK.getKey(event.getPlacedBlock().getBlock()));
 					UserHistoryDatabase.addHistory(snapshot.getPos().asLong(), changeData);
 				}
 			}
@@ -133,19 +133,19 @@ public class BlockHistory {
 					for (BlockPos position : event.getAffectedBlocks()) {
 						String username = player.getName().getString();
 						BlockState state = level.getBlockState(position);
-						ResourceLocation resourceLoc = ForgeRegistries.BLOCKS.getKey(state.getBlock());
+						ResourceLocation resourceLoc = BuiltInRegistries.BLOCK.getKey(state.getBlock());
 						ChangeStorage changeData = new ChangeStorage(getDate(), username, "explosion", resourceLoc != null ? resourceLoc : new ResourceLocation("minecraft", "air"));
 						changeDataMap.put(position.asLong(), changeData);
 					}
 					//Bulk the database insert to reduce the number of transactions
 					UserHistoryDatabase.bulkAddHistory(changeDataMap);
 				} else {
-					if (ForgeRegistries.ENTITY_TYPES.getKey(entity.getType()) != null) {
+					if (BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()) != null) {
 						Map<Long, ChangeStorage> changeDataMap = new HashMap<>();
-						String mobName = ForgeRegistries.ENTITY_TYPES.getKey(entity.getType()).toString();
+						String mobName = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()).toString();
 						for (BlockPos position : event.getAffectedBlocks()) {
 							BlockState state = level.getBlockState(position);
-							ResourceLocation resourceLoc = ForgeRegistries.BLOCKS.getKey(state.getBlock());
+							ResourceLocation resourceLoc = BuiltInRegistries.BLOCK.getKey(state.getBlock());
 							ChangeStorage changeData = new ChangeStorage(getDate(), mobName, "explosion", resourceLoc != null ? resourceLoc : new ResourceLocation("minecraft", "air"));
 							changeDataMap.put(position.asLong(), changeData);
 						}
@@ -173,7 +173,7 @@ public class BlockHistory {
 						CONTAINER_PLACE_MAP.put(player.getUUID(), position.asLong());
 					}
 					String username = player.getName().getString();
-					ChangeStorage changeData = new ChangeStorage(getDate(), username, "containeropen", ForgeRegistries.BLOCKS.getKey((state.getBlock())));
+					ChangeStorage changeData = new ChangeStorage(getDate(), username, "containeropen", BuiltInRegistries.BLOCK.getKey((state.getBlock())));
 					UserHistoryDatabase.addHistory(position.asLong(), changeData);
 				}
 			}
@@ -208,7 +208,7 @@ public class BlockHistory {
 					NonNullList<ItemStack> differenceList = InventoryHelper.getInventoryChange(oldInventory, currentInventory);
 					String username = player.getName().getString();
 					BlockPos position = BlockPos.of(CONTAINER_PLACE_MAP.get(playerUUID));
-					ResourceLocation location = ForgeRegistries.BLOCKS.getKey(level.getBlockState(position).getBlock());
+					ResourceLocation location = BuiltInRegistries.BLOCK.getKey(level.getBlockState(position).getBlock());
 					ChangeStorage changeData = null;
 					if (newCount < oldCount) {
 						changeData = new ChangeStorage(getDate(), username, "inventory_withdrawal", location, differenceList.toString());

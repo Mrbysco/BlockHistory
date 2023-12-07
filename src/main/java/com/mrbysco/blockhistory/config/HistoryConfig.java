@@ -1,28 +1,27 @@
 package com.mrbysco.blockhistory.config;
 
 import com.mrbysco.blockhistory.BlockHistory;
-import net.minecraftforge.common.ForgeConfigSpec;
-import net.minecraftforge.common.ForgeConfigSpec.BooleanValue;
-import net.minecraftforge.common.ForgeConfigSpec.IntValue;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.event.config.ModConfigEvent;
+import net.neoforged.neoforge.common.ModConfigSpec;
+import net.neoforged.neoforge.common.ModConfigSpec.IntValue;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.event.config.ModConfigEvent;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.List;
 
 public class HistoryConfig {
 	public static class Server {
-		public final BooleanValue storeExplosions;
-		public final BooleanValue storeContainerInteractions;
-		public final BooleanValue storeContainerInventoryChanges;
-		public final BooleanValue logToLog;
+		public final ModConfigSpec.BooleanValue storeExplosions;
+		public final ModConfigSpec.BooleanValue storeContainerInteractions;
+		public final ModConfigSpec.BooleanValue storeContainerInventoryChanges;
+		public final ModConfigSpec.BooleanValue logToLog;
 		public final IntValue maxHistoryPerBlock;
 		public final IntValue maxHistoryInChat;
-		public final BooleanValue whitelistEnabled;
-		public final ForgeConfigSpec.ConfigValue<List<? extends String>> whitelist;
+		public final ModConfigSpec.BooleanValue whitelistEnabled;
+		public final ModConfigSpec.ConfigValue<List<? extends String>> whitelist;
 		public final IntValue removeOlderThanDays;
 
-		Server(ForgeConfigSpec.Builder builder) {
+		Server(ModConfigSpec.Builder builder) {
 			builder.comment("Logging settings")
 					.push("Logging");
 
@@ -66,11 +65,11 @@ public class HistoryConfig {
 		}
 	}
 
-	public static final ForgeConfigSpec serverSpec;
+	public static final ModConfigSpec serverSpec;
 	public static final Server SERVER;
 
 	static {
-		final Pair<Server, ForgeConfigSpec> specPair = new ForgeConfigSpec.Builder().configure(Server::new);
+		final Pair<Server, ModConfigSpec> specPair = new ModConfigSpec.Builder().configure(Server::new);
 		serverSpec = specPair.getRight();
 		SERVER = specPair.getLeft();
 	}

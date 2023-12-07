@@ -3,11 +3,11 @@ package com.mrbysco.blockhistory.storage;
 import net.minecraft.resources.ResourceLocation;
 
 public class ChangeStorage {
-	public String date;
-	public String username;
-	public String change;
-	public ResourceLocation resourceLocation;
-	public String extraData;
+	public final String date;
+	public final String username;
+	public final String change;
+	public final ResourceLocation resourceLocation;
+	public final String extraData;
 
 	public ChangeStorage(String date, String username, String change, ResourceLocation resourceLocation) {
 		this.date = date;
