@@ -12,7 +12,9 @@ public enum ChangeAction {
 	EXPLOSION("explosion", "exploded", ChatFormatting.RED),
 	CONTAINER_OPEN("containeropen", "opened the container of", ChatFormatting.YELLOW),
 	INVENTORY_WITHDRAWAL("inventory_withdrawal", "withdrew %s from", ChatFormatting.RED),
-	INVENTORY_INSERTION("inventory_insertion", "inserted %s into", ChatFormatting.GREEN);
+	INVENTORY_INSERTION("inventory_insertion", "inserted %s into", ChatFormatting.GREEN),
+	TRAMPLE("trample", "trampled", ChatFormatting.YELLOW),
+	MODIFIED("modify", "modified [%s]", ChatFormatting.YELLOW);
 
 	private final String name;
 	private final String nicerName;

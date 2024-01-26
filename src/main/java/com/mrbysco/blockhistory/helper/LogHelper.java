@@ -55,6 +55,8 @@ public class LogHelper {
 			} else {
 				return Component.literal(String.format("At %s %s has %s the inventory of block [%s]", change.date, change.username, String.format(action.getNicerName(), "items"), change.resourceLocation.toString())).withStyle(action.getColor());
 			}
+		} else if (action == ChangeAction.MODIFIED) {
+			return Component.literal(String.format("At %s %s has %s using a [%s]", change.date, change.username, String.format(action.getNicerName(), change.resourceLocation.toString()),change.extraData)).withStyle(action.getColor());
 		} else {
 			return Component.literal(String.format("At %s %s has %s a block [%s]", change.date, change.username, action.getNicerName(), change.resourceLocation.toString())).withStyle(action.getColor());
 		}
