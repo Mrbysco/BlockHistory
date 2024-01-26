@@ -111,11 +111,14 @@ public class BlockHistory {
 			Entity entity = event.getEntity();
 			Level level = entity.level();
 			if (matchesWhitelist(level) && entity instanceof Player player && !(entity instanceof FakePlayer)) {
+				Map<Long, ChangeStorage> changeDataMap = new HashMap<>();
 				for (BlockSnapshot snapshot : event.getReplacedBlockSnapshots()) {
 					String username = player.getName().getString();
 					ChangeStorage changeData = new ChangeStorage(getDate(), username, "place", ForgeRegistries.BLOCKS.getKey(event.getPlacedBlock().getBlock()));
-					UserHistoryDatabase.addHistory(snapshot.getPos().asLong(), changeData);
+					changeDataMap.put(snapshot.getPos().asLong(), changeData);
 				}
+				//Bulk the database insert to reduce the number of transactions
+				UserHistoryDatabase.bulkAddHistory(changeDataMap);
 			}
 		}
 	}
