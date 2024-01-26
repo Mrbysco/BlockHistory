@@ -1,2 +1,3 @@
-* Add a dimension whitelist to the config
-* Add a config to limit the amount of days Block History stores data for
+* Add more data in bulk instead of one by one
+* Log trampling of crops
+* Log modifying a block (stripping a log, etc)
