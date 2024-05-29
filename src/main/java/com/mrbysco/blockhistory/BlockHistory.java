@@ -16,12 +16,11 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.IExtensionPoint;
-import net.neoforged.fml.IExtensionPoint.DisplayTest;
-import net.neoforged.fml.ModLoadingContext;
+import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.loading.FMLPaths;
@@ -52,21 +51,22 @@ public class BlockHistory {
 	public static final Logger LOGGER = LogUtils.getLogger();
 	public static final File personalFolder = new File(FMLPaths.MODSDIR.get().toFile(), "blockhistory");
 
-	public BlockHistory(IEventBus eventBus) {
-		try {
-			UserHistoryDatabase.init();
-		} catch (SqlJetException e) {
-			LOGGER.error(e.getMessage());
+	public BlockHistory(IEventBus eventBus, ModContainer container, Dist dist) {
+		if (dist.isDedicatedServer()) {
+			try {
+				UserHistoryDatabase.init();
+			} catch (SqlJetException e) {
+				LOGGER.error(e.getMessage());
+			}
+
+			container.registerConfig(ModConfig.Type.SERVER, HistoryConfig.serverSpec);
+			eventBus.register(HistoryConfig.class);
+
+			NeoForge.EVENT_BUS.register(this);
+			NeoForge.EVENT_BUS.addListener(this::onCommandEvent);
+		} else {
+			LOGGER.info("BlockHistory is a server-side only mod. It has no functionality when installed on the client.");
 		}
-
-		ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, HistoryConfig.serverSpec);
-		eventBus.register(HistoryConfig.class);
-
-		NeoForge.EVENT_BUS.register(this);
-		NeoForge.EVENT_BUS.addListener(this::onCommandEvent);
-
-		//Make sure the mod being absent on the other network side does not cause the client to display the server as incompatible
-		ModLoadingContext.get().registerExtensionPoint(DisplayTest.class, () -> new IExtensionPoint.DisplayTest(() -> DisplayTest.IGNORESERVERONLY, (remoteVersionString, networkBool) -> true));
 	}
 
 	public void onCommandEvent(RegisterCommandsEvent event) {
