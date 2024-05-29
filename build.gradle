@@ -74,13 +74,12 @@ dependencies {
         exclude group: 'org.antlr', module: 'stringtemplate'
         exclude group: 'antlr', module: 'antlr'
     }
+
     jarJar(group: 'org.tmatesoft.sqljet', name: 'sqljet', version: "${sqljet_version}") {
-        jarJar.pin(it, "${sqljet_version}")
-        jarJar.ranged(it, "[${sqljet_version},1.2.0)")
+        version { strictly "${sqljet_version}" }
     }
     jarJar(group: 'org.antlr', name: 'antlr-runtime', version: "3.4") {
-        jarJar.pin(it, "3.4")
-        jarJar.ranged(it, "[3.4,3.5)")
+        version { strictly "3.4" }
         exclude group: 'org.antlr', module: 'ST4'
         exclude group: 'org.antlr', module: 'stringtemplate'
         exclude group: 'antlr', module: 'antlr'
@@ -103,7 +102,6 @@ jar {
 }
 
 
-
 tasks.jarJar.configure {
     archiveClassifier.set("")
 }
@@ -113,11 +111,11 @@ tasks.jar.configure {
 }
 
 tasks.build.dependsOn tasks.jarJar
+
 publishing {
     publications {
         register('mavenJava', MavenPublication) {
             groupId project.group
-            artifact project.tasks.jarJar
             artifactId base.archivesName.get()
             version project.version
             from components.java
