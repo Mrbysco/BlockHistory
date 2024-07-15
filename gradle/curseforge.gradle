@@ -1,4 +1,4 @@
-apply plugin: "com.matthewprenger.cursegradle"
+apply plugin: "net.darkhax.curseforgegradle"
 
 if (System.getenv().CURSEFORGE_KEY) {
     task curseforge(type: net.darkhax.curseforgegradle.TaskPublishCurseForge) {
