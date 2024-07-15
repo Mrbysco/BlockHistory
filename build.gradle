@@ -3,8 +3,8 @@ plugins {
     id 'eclipse'
     id 'idea'
     id 'maven-publish'
-    id 'net.neoforged.gradle.userdev' version '7.0.134'
-    id 'net.darkhax.curseforgegradle' version '1.1.18'
+    id 'net.neoforged.gradle.userdev' version '7.0.154'
+    id 'net.darkhax.curseforgegradle' version '1.1.24'
     id 'com.modrinth.minotaur' version "2.+"
 }
 
@@ -140,10 +140,10 @@ if (System.getenv().CURSEFORGE_KEY) {
 
         def mainFile = upload(project.curseforge_id, project.tasks.jarJar)
         mainFile.releaseType = 'beta'
-        mainFile.addGameVersion "NeoForge"
-        mainFile.addGameVersion "${mc_version}"
-        mainFile.addGameVersion "Java 21"
-        mainFile.addGameVersion('Server')
+        mainFile.addModLoader("NeoForge")
+        mainFile.addGameVersion("${mc_version}")
+        mainFile.addJavaVersion("Java 21")
+        mainFile.addEnvironment('Server')
 
         mainFile.changelog = file("$project.rootDir/changelog.md")
         mainFile.changelogType = 'markdown'
