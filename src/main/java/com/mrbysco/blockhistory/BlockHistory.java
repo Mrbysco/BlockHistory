@@ -133,7 +133,8 @@ public class BlockHistory {
 						String username = player.getName().getString();
 						BlockState state = level.getBlockState(position);
 						ResourceLocation resourceLoc = BuiltInRegistries.BLOCK.getKey(state.getBlock());
-						ChangeStorage changeData = new ChangeStorage(getDate(), username, "explosion", resourceLoc != null ? resourceLoc : new ResourceLocation("minecraft", "air"));
+						ChangeStorage changeData = new ChangeStorage(getDate(), username, "explosion",
+								resourceLoc != null ? resourceLoc : ResourceLocation.withDefaultNamespace("air"));
 						changeDataMap.put(position.asLong(), changeData);
 					}
 					//Bulk the database insert to reduce the number of transactions
@@ -145,7 +146,8 @@ public class BlockHistory {
 						for (BlockPos position : event.getAffectedBlocks()) {
 							BlockState state = level.getBlockState(position);
 							ResourceLocation resourceLoc = BuiltInRegistries.BLOCK.getKey(state.getBlock());
-							ChangeStorage changeData = new ChangeStorage(getDate(), mobName, "explosion", resourceLoc != null ? resourceLoc : new ResourceLocation("minecraft", "air"));
+							ChangeStorage changeData = new ChangeStorage(getDate(), mobName,
+									"explosion", resourceLoc != null ? resourceLoc : ResourceLocation.withDefaultNamespace("air"));
 							changeDataMap.put(position.asLong(), changeData);
 						}
 						//Bulk the database insert to reduce the number of transactions

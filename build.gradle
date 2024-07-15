@@ -23,7 +23,7 @@ jarJar.enable()
 
 runs {
     // applies to all the run configs below
-    configureEach {
+    configureEach { net.neoforged.gradle.dsl.common.runs.run.Run run ->
         // Recommended logging data for a userdev environment
         systemProperty 'forge.logging.markers', 'REGISTRIES'
 
@@ -40,6 +40,10 @@ runs {
 
         //Limit ram usage for the dev environment to 4GB
         jvmArgument '-Xmx4G'
+
+        if (run.project.javaToolchains.launcherFor(java.toolchain).map { it.metadata.vendor }.getOrElse("").contains("JetBrains")) {
+            run.jvmArgument("-XX:+AllowEnhancedClassRedefinition")
+        }
 
         modSource project.sourceSets.main
     }
