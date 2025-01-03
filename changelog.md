@@ -1,1 +1,1 @@
-* Allow null players on Block Modification event
+* Fix error that made previous build invalid
