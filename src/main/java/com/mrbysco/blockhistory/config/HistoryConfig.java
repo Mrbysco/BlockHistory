@@ -4,7 +4,6 @@ import com.mrbysco.blockhistory.BlockHistory;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.event.config.ModConfigEvent;
 import net.neoforged.neoforge.common.ModConfigSpec;
-import net.neoforged.neoforge.common.ModConfigSpec.IntValue;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.List;
@@ -15,11 +14,11 @@ public class HistoryConfig {
 		public final ModConfigSpec.BooleanValue storeContainerInteractions;
 		public final ModConfigSpec.BooleanValue storeContainerInventoryChanges;
 		public final ModConfigSpec.BooleanValue logToLog;
-		public final IntValue maxHistoryPerBlock;
-		public final IntValue maxHistoryInChat;
+		public final ModConfigSpec.IntValue maxHistoryPerBlock;
+		public final ModConfigSpec.IntValue maxHistoryInChat;
 		public final ModConfigSpec.BooleanValue whitelistEnabled;
 		public final ModConfigSpec.ConfigValue<List<? extends String>> whitelist;
-		public final IntValue removeOlderThanDays;
+		public final ModConfigSpec.IntValue removeOlderThanDays;
 
 		Server(ModConfigSpec.Builder builder) {
 			builder.comment("Logging settings")
@@ -55,7 +54,9 @@ public class HistoryConfig {
 
 			whitelist = builder
 					.comment("The whitelist of dimensions to log in [Default: [\"minecraft:overworld\", \"minecraft:the_nether\", \"minecraft:the_end\"]]")
-					.defineListAllowEmpty(List.of("whitelist"), () -> List.of("minecraft:overworld", "minecraft:the_nether", "minecraft:the_end"), o -> o instanceof String);
+					.defineListAllowEmpty("whitelist", () ->
+									List.of("minecraft:overworld", "minecraft:the_nether", "minecraft:the_end"),
+							String::new, o -> o instanceof String);
 
 			removeOlderThanDays = builder
 					.comment("The amount of days to keep history for (0 = Don't delete) [Default: 0]")
