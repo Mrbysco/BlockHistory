@@ -187,7 +187,7 @@ public class BlockHistory {
 		final Level level = player.level();
 		if (!level.isClientSide() && matchesWhitelist(level) && HistoryConfig.SERVER.storeContainerInventoryChanges.get()) {
 			AbstractContainerMenu container = event.getContainer();
-			if (container.getItems().size() >= 1) {
+			if (!container.getItems().isEmpty()) {
 				CONTAINER_MAP.put(player.getUUID(), InventoryHelper.getContainerInventory(container));
 			}
 		}
