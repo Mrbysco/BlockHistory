@@ -22,7 +22,7 @@ import java.util.List;
 public class HistoryCommands {
 	public static void initializeCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
 		final LiteralArgumentBuilder<CommandSourceStack> root = Commands.literal(BlockHistory.MOD_ID);
-		root.requires((commandSource) -> commandSource.hasPermission(2))
+		root.requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
 				.then(Commands.argument("pos", BlockPosArgument.blockPos()).executes(HistoryCommands::showHistory))
 				.then(Commands.literal("log").then(Commands.argument("pos", BlockPosArgument.blockPos()).executes(HistoryCommands::logHistory)));
 		dispatcher.register(root);

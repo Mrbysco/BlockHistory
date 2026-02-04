@@ -1,15 +1,15 @@
 package com.mrbysco.blockhistory.storage;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 public class ChangeStorage {
 	public final String date;
 	public final String username;
 	public final String change;
-	public final ResourceLocation resourceLocation;
+	public final Identifier resourceLocation;
 	public final String extraData;
 
-	public ChangeStorage(String date, String username, String change, ResourceLocation resourceLocation) {
+	public ChangeStorage(String date, String username, String change, Identifier resourceLocation) {
 		this.date = date;
 		this.username = username;
 		this.change = change;
@@ -17,7 +17,7 @@ public class ChangeStorage {
 		this.extraData = "";
 	}
 
-	public ChangeStorage(String date, String username, String change, ResourceLocation resourceLocation, String extraData) {
+	public ChangeStorage(String date, String username, String change, Identifier resourceLocation, String extraData) {
 		this.date = date;
 		this.username = username;
 		this.change = change;

@@ -9,7 +9,7 @@ import com.mrbysco.blockhistory.storage.UserHistoryDatabase;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -132,9 +132,9 @@ public class BlockHistory {
 					for (BlockPos position : event.getAffectedBlocks()) {
 						String username = player.getName().getString();
 						BlockState state = level.getBlockState(position);
-						ResourceLocation resourceLoc = BuiltInRegistries.BLOCK.getKey(state.getBlock());
+						Identifier resourceLoc = BuiltInRegistries.BLOCK.getKey(state.getBlock());
 						ChangeStorage changeData = new ChangeStorage(getDate(), username, "explosion",
-								resourceLoc != null ? resourceLoc : ResourceLocation.withDefaultNamespace("air"));
+								resourceLoc != null ? resourceLoc : Identifier.withDefaultNamespace("air"));
 						changeDataMap.put(position.asLong(), changeData);
 					}
 					//Bulk the database insert to reduce the number of transactions
@@ -145,9 +145,9 @@ public class BlockHistory {
 						String mobName = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()).toString();
 						for (BlockPos position : event.getAffectedBlocks()) {
 							BlockState state = level.getBlockState(position);
-							ResourceLocation resourceLoc = BuiltInRegistries.BLOCK.getKey(state.getBlock());
+							Identifier resourceLoc = BuiltInRegistries.BLOCK.getKey(state.getBlock());
 							ChangeStorage changeData = new ChangeStorage(getDate(), mobName,
-									"explosion", resourceLoc != null ? resourceLoc : ResourceLocation.withDefaultNamespace("air"));
+									"explosion", resourceLoc != null ? resourceLoc : Identifier.withDefaultNamespace("air"));
 							changeDataMap.put(position.asLong(), changeData);
 						}
 						//Bulk the database insert to reduce the number of transactions
@@ -209,7 +209,7 @@ public class BlockHistory {
 					NonNullList<ItemStack> differenceList = InventoryHelper.getInventoryChange(oldInventory, currentInventory);
 					String username = player.getName().getString();
 					BlockPos position = BlockPos.of(CONTAINER_PLACE_MAP.get(playerUUID));
-					ResourceLocation location = BuiltInRegistries.BLOCK.getKey(level.getBlockState(position).getBlock());
+					Identifier location = BuiltInRegistries.BLOCK.getKey(level.getBlockState(position).getBlock());
 					ChangeStorage changeData = null;
 					if (newCount < oldCount) {
 						changeData = new ChangeStorage(getDate(), username, "inventory_withdrawal", location, differenceList.toString());
@@ -236,7 +236,7 @@ public class BlockHistory {
 
 	public boolean matchesWhitelist(Level level) {
 		if (HistoryConfig.SERVER.whitelistEnabled.get()) {
-			return HistoryConfig.SERVER.whitelist.get().contains(level.dimension().location().toString());
+			return HistoryConfig.SERVER.whitelist.get().contains(level.dimension().identifier().toString());
 		}
 		return true;
 	}
