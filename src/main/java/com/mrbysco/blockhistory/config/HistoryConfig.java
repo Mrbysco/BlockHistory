@@ -41,8 +41,8 @@ public class HistoryConfig {
 					.define("logToLog", false);
 
 			maxHistoryPerBlock = builder
-					.comment("The max amount of history stored per block [Default: " + Integer.MAX_VALUE + "]")
-					.defineInRange("maxHistoryPerBlock", Integer.MAX_VALUE, 1, Integer.MAX_VALUE);
+					.comment("The max amount of history stored per block [Default: 100]")
+					.defineInRange("maxHistoryPerBlock", 100, 1, Integer.MAX_VALUE);
 
 			maxHistoryInChat = builder
 					.comment("The max amount of history stored per block [Default: 10]")
