@@ -23,8 +23,18 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class UserHistoryDatabase {
+	private static final Gson GSON = new Gson();
+	private static final ExecutorService DATABASE_EXECUTOR =
+			Executors.newSingleThreadExecutor(r -> {
+				Thread t = new Thread(r, "BlockHistory-DB");
+				t.setDaemon(true);
+				return t;
+			});
+
 	private static SqlJetDb database;
 	private static ISqlJetTable storageTable;
 	private static final Long2ObjectOpenHashMap<ArrayList<String>> storage = new Long2ObjectOpenHashMap<>();
@@ -54,13 +64,12 @@ public class UserHistoryDatabase {
 		ISqlJetCursor cursor;
 		cursor = storageTable.open();
 		while (!cursor.eof()) {
-			Gson gson = new Gson();
 			Type type = new TypeToken<ArrayList<String>>() {
 			}.getType();
 			String data = cursor.getString("data");
 			ArrayList<String> changes = new ArrayList<>();
 			if (!data.isEmpty()) {
-				changes = gson.fromJson(data, type);
+				changes = GSON.fromJson(data, type);
 			}
 			storage.put(cursor.getInteger("blockpos"), changes);
 			cursor.next();
@@ -73,73 +82,26 @@ public class UserHistoryDatabase {
 		return storage.containsKey(position);
 	}
 
-	public static void addHistory(long position, ChangeStorage changes) {
-		try {
-//            BlockHistory.LOGGER.info(String.format("Block at position %s was %s by %s", BlockPos.fromLong(position), changes.change, changes.username));
-			Gson gson = new Gson();
-			//Check if the position is already in the database and add it if it isn't
-			if (!historyStored(position)) {
-				String changeData = gson.toJson(changes);
-				ArrayList<String> changeList = new ArrayList<>(Collections.singletonList(changeData));
-				storage.put(position, changeList);
-				storageTable.insert(position, gson.toJson(changeList));
-			} else {
-				//If it is in the database, add the change to the existing list
-				database.beginTransaction(SqlJetTransactionMode.WRITE);
-				ISqlJetCursor updateCursor = storageTable.lookup(storageTable.getPrimaryKeyIndexName(), position);
-				while (!updateCursor.eof()) {
-					long foundPosition = updateCursor.getInteger("blockpos");
-					if (foundPosition == position) {
-						ArrayList<String> rawChangeStorage = new ArrayList<>(getRawHistory(position));
-						String changeData = gson.toJson(changes);
-						if (!changeData.isEmpty() && !rawChangeStorage.contains(changeData)) {
-							int maxStorage = HistoryConfig.SERVER.maxHistoryPerBlock.get();
-							if (rawChangeStorage.size() == maxStorage) {
-								rawChangeStorage = new ArrayList<>(rawChangeStorage.subList(rawChangeStorage.size() - (maxStorage - 1), rawChangeStorage.size()));
-							}
-							rawChangeStorage.add(changeData);
-						}
-						storage.put(position, rawChangeStorage);
-						updateCursor.update(position, gson.toJson(rawChangeStorage));
-						break;
-					}
-					updateCursor.next();
-				}
-				updateCursor.close();
-				database.commit();
-			}
-		} catch (SqlJetException e) {
-			BlockHistory.LOGGER.error(e.getMessage());
-		}
-	}
 
-	/**
-	 * Adds multiple changes to the database at once to prevent multiple transactions
-	 *
-	 * @param changeMap A map of positions and changes to add
-	 */
-	public static void bulkAddHistory(Map<Long, ChangeStorage> changeMap) {
-		try {
-			Gson gson = new Gson();
-			database.beginTransaction(SqlJetTransactionMode.WRITE);
-			for (Map.Entry<Long, ChangeStorage> entry : changeMap.entrySet()) {
-				long position = entry.getKey();
-				ChangeStorage changes = entry.getValue();
-//				BlockHistory.LOGGER.info(String.format("Block at position %s was %s by %s", BlockPos.of(position), changes.change, changes.username));
+	public static void addHistory(long position, ChangeStorage changes) {
+		DATABASE_EXECUTOR.submit(() -> {
+			try {
+//            BlockHistory.LOGGER.info(String.format("Block at position %s was %s by %s", BlockPos.fromLong(position), changes.change, changes.username));
 				//Check if the position is already in the database and add it if it isn't
 				if (!historyStored(position)) {
-					String changeData = gson.toJson(changes);
+					String changeData = GSON.toJson(changes);
 					ArrayList<String> changeList = new ArrayList<>(Collections.singletonList(changeData));
 					storage.put(position, changeList);
-					storageTable.insert(position, gson.toJson(changeList));
+					storageTable.insert(position, GSON.toJson(changeList));
 				} else {
 					//If it is in the database, add the change to the existing list
+					database.beginTransaction(SqlJetTransactionMode.WRITE);
 					ISqlJetCursor updateCursor = storageTable.lookup(storageTable.getPrimaryKeyIndexName(), position);
 					while (!updateCursor.eof()) {
 						long foundPosition = updateCursor.getInteger("blockpos");
 						if (foundPosition == position) {
 							ArrayList<String> rawChangeStorage = new ArrayList<>(getRawHistory(position));
-							String changeData = gson.toJson(changes);
+							String changeData = GSON.toJson(changes);
 							if (!changeData.isEmpty() && !rawChangeStorage.contains(changeData)) {
 								int maxStorage = HistoryConfig.SERVER.maxHistoryPerBlock.get();
 								if (rawChangeStorage.size() == maxStorage) {
@@ -148,28 +110,77 @@ public class UserHistoryDatabase {
 								rawChangeStorage.add(changeData);
 							}
 							storage.put(position, rawChangeStorage);
-							updateCursor.update(position, gson.toJson(rawChangeStorage));
+							updateCursor.update(position, GSON.toJson(rawChangeStorage));
 							break;
 						}
 						updateCursor.next();
 					}
 					updateCursor.close();
+					database.commit();
 				}
+			} catch (SqlJetException e) {
+				BlockHistory.LOGGER.error(e.getMessage());
 			}
-			database.commit();
-		} catch (SqlJetException e) {
-			BlockHistory.LOGGER.error(e.getMessage());
-		}
+		});
+	}
+
+	/**
+	 * Adds multiple changes to the database at once to prevent multiple transactions
+	 *
+	 * @param changeMap A map of positions and changes to add
+	 */
+	public static void bulkAddHistory(Map<Long, ChangeStorage> changeMap) {
+		DATABASE_EXECUTOR.submit(() -> {
+			try {
+				database.beginTransaction(SqlJetTransactionMode.WRITE);
+				for (Map.Entry<Long, ChangeStorage> entry : changeMap.entrySet()) {
+					long position = entry.getKey();
+					ChangeStorage changes = entry.getValue();
+//				BlockHistory.LOGGER.info(String.format("Block at position %s was %s by %s", BlockPos.of(position), changes.change, changes.username));
+					//Check if the position is already in the database and add it if it isn't
+					if (!historyStored(position)) {
+						String changeData = GSON.toJson(changes);
+						ArrayList<String> changeList = new ArrayList<>(Collections.singletonList(changeData));
+						storage.put(position, changeList);
+						storageTable.insert(position, GSON.toJson(changeList));
+					} else {
+						//If it is in the database, add the change to the existing list
+						ISqlJetCursor updateCursor = storageTable.lookup(storageTable.getPrimaryKeyIndexName(), position);
+						while (!updateCursor.eof()) {
+							long foundPosition = updateCursor.getInteger("blockpos");
+							if (foundPosition == position) {
+								ArrayList<String> rawChangeStorage = new ArrayList<>(getRawHistory(position));
+								String changeData = GSON.toJson(changes);
+								if (!changeData.isEmpty() && !rawChangeStorage.contains(changeData)) {
+									int maxStorage = HistoryConfig.SERVER.maxHistoryPerBlock.get();
+									if (rawChangeStorage.size() == maxStorage) {
+										rawChangeStorage = new ArrayList<>(rawChangeStorage.subList(rawChangeStorage.size() - (maxStorage - 1), rawChangeStorage.size()));
+									}
+									rawChangeStorage.add(changeData);
+								}
+								storage.put(position, rawChangeStorage);
+								updateCursor.update(position, GSON.toJson(rawChangeStorage));
+								break;
+							}
+							updateCursor.next();
+						}
+						updateCursor.close();
+					}
+				}
+				database.commit();
+			} catch (SqlJetException e) {
+				BlockHistory.LOGGER.error(e.getMessage());
+			}
+		});
 	}
 
 	public static List<ChangeStorage> getHistory(long position) {
 		List<ChangeStorage> changeDataList = new ArrayList<>();
 		if (historyStored(position)) {
 			List<String> rawChangeData = getRawHistory(position);
-			Gson gson = new Gson();
 			if (!rawChangeData.isEmpty()) {
 				for (String rawChangeDatum : rawChangeData) {
-					changeDataList.add(gson.fromJson(rawChangeDatum, ChangeStorage.class));
+					changeDataList.add(GSON.fromJson(rawChangeDatum, ChangeStorage.class));
 				}
 				changeDataList.sort(Comparator.comparing(d -> d.date));
 			}
@@ -187,50 +198,51 @@ public class UserHistoryDatabase {
 
 	public static void removeHistory(int days) {
 		if (days > 0) {
-			try {
-				final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+			DATABASE_EXECUTOR.submit(() -> {
+				try {
+					final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
 
-				//Iterate over the database and remove all entries that are older than the set amount of days
-				database.beginTransaction(SqlJetTransactionMode.WRITE);
-				ISqlJetCursor cursor = storageTable.open();
-				while (!cursor.eof()) {
-					long position = cursor.getInteger("blockpos");
-					List<String> rawChangeData = getRawHistory(position);
-					if (!rawChangeData.isEmpty()) {
-						List<String> removeList = new ArrayList<>();
-						for (String rawChangeDatum : rawChangeData) {
-							Gson gson = new Gson();
-							ChangeStorage storage = gson.fromJson(rawChangeDatum, ChangeStorage.class);
-							try {
-								Date changeDate = dateFormat.parse(storage.date);
-								Date date = Calendar.getInstance().getTime();
-								//Check if the changeDate is older than 7 days
-								if (date.getTime() - changeDate.getTime() > (long) days * 24 * 60 * 60 * 1000) {
-									BlockHistory.LOGGER.error("Removing data for block at position " + position + " as it's older than " + days + " days");
-									removeList.add(rawChangeDatum);
+					//Iterate over the database and remove all entries that are older than the set amount of days
+					database.beginTransaction(SqlJetTransactionMode.WRITE);
+					ISqlJetCursor cursor = storageTable.open();
+					while (!cursor.eof()) {
+						long position = cursor.getInteger("blockpos");
+						List<String> rawChangeData = getRawHistory(position);
+						if (!rawChangeData.isEmpty()) {
+							List<String> removeList = new ArrayList<>();
+							for (String rawChangeDatum : rawChangeData) {
+								ChangeStorage storage = GSON.fromJson(rawChangeDatum, ChangeStorage.class);
+								try {
+									Date changeDate = dateFormat.parse(storage.date);
+									Date date = Calendar.getInstance().getTime();
+									//Check if the changeDate is older than 7 days
+									if (date.getTime() - changeDate.getTime() > (long) days * 24 * 60 * 60 * 1000) {
+										BlockHistory.LOGGER.error("Removing data for block at position " + position + " as it's older than " + days + " days");
+										removeList.add(rawChangeDatum);
+									}
+								} catch (ParseException e) {
+									e.printStackTrace();
 								}
-							} catch (ParseException e) {
-								e.printStackTrace();
+							}
+							if (!removeList.isEmpty()) {
+								rawChangeData.removeAll(removeList);
+								if (rawChangeData.isEmpty()) {
+									storage.remove(position);
+									cursor.delete();
+								} else {
+									storage.put(position, new ArrayList<>(rawChangeData));
+									storageTable.insert(position, GSON.toJson(rawChangeData));
+								}
 							}
 						}
-						if (!removeList.isEmpty()) {
-							rawChangeData.removeAll(removeList);
-							if (rawChangeData.isEmpty()) {
-								storage.remove(position);
-								cursor.delete();
-							} else {
-								storage.put(position, new ArrayList<>(rawChangeData));
-								storageTable.insert(position, new Gson().toJson(rawChangeData));
-							}
-						}
+						cursor.next();
 					}
-					cursor.next();
+					cursor.close();
+					database.commit();
+				} catch (SqlJetException e) {
+					e.printStackTrace();
 				}
-				cursor.close();
-				database.commit();
-			} catch (SqlJetException e) {
-				e.printStackTrace();
-			}
+			});
 		}
 	}
 }
