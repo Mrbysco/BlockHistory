@@ -51,6 +51,8 @@ public class BlockHistory {
 	public static final String MOD_ID = "blockhistory";
 	public static final Logger LOGGER = LogUtils.getLogger();
 	public static final File personalFolder = new File(FMLPaths.MODSDIR.get().toFile(), "blockhistory");
+	private static final ThreadLocal<DateFormat> DATE_FORMAT =
+			ThreadLocal.withInitial(() -> new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"));
 
 	public BlockHistory(IEventBus eventBus, ModContainer container, Dist dist) {
 		if (dist.isDedicatedServer()) {
@@ -203,10 +205,16 @@ public class BlockHistory {
 			NonNullList<ItemStack> oldInventory = CONTAINER_MAP.getOrDefault(playerUUID, null);
 			final AbstractContainerMenu container = event.getContainer();
 			if (CONTAINER_PLACE_MAP.containsKey(playerUUID) && oldInventory != null && container != null) {
-				NonNullList<ItemStack> currentInventory = InventoryHelper.getContainerInventory(container);
 				int oldCount = InventoryHelper.getItemCount(oldInventory);
-				int newCount = InventoryHelper.getItemCount(currentInventory);
+				NonNullList<ItemStack> containerItems = container.getItems();
+				int newCount = 0;
+				for (ItemStack stack : containerItems) {
+					if (!stack.isEmpty()) newCount++;
+					if (newCount > oldCount) break;
+				}
+
 				if (oldCount != newCount) {
+					NonNullList<ItemStack> currentInventory = InventoryHelper.getContainerInventory(container);
 					NonNullList<ItemStack> differenceList = InventoryHelper.getInventoryChange(oldInventory, currentInventory);
 					String username = player.getName().getString();
 					BlockPos position = BlockPos.of(CONTAINER_PLACE_MAP.get(playerUUID));
@@ -226,13 +234,13 @@ public class BlockHistory {
 				}
 			}
 			CONTAINER_MAP.remove(playerUUID);
+			CONTAINER_PLACE_MAP.remove(playerUUID);
 		}
 	}
 
 	public String getDate() {
 		Date date = Calendar.getInstance().getTime();
-		DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
-		return dateFormat.format(date);
+		return DATE_FORMAT.get().format(date);
 	}
 
 	public boolean matchesWhitelist(Level level) {
