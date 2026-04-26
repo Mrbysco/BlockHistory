@@ -32,6 +32,7 @@ import net.neoforged.neoforge.event.entity.player.PlayerContainerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
 import net.neoforged.neoforge.event.level.ExplosionEvent;
+import net.neoforged.neoforge.event.level.block.BreakBlockEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import org.slf4j.Logger;
 import org.tmatesoft.sqljet.core.SqlJetException;
@@ -79,7 +80,7 @@ public class BlockHistory {
 	}
 
 	@SubscribeEvent(priority = EventPriority.HIGHEST)
-	public void onBlockBreak(final BlockEvent.BreakEvent event) {
+	public void onBlockBreak(final BreakBlockEvent event) {
 		if (!event.getLevel().isClientSide()) {
 			Player player = event.getPlayer();
 			Level level = player.level();
