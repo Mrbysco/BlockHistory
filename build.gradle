@@ -20,8 +20,11 @@ neoForge {
     // Specify the version of NeoForge to use.
     version = project.neo_version
 
-    // This line is optional. Access Transformers are automatically detected
-    // accessTransformers = project.files('src/main/resources/META-INF/accesstransformer.cfg')
+    // Automatically enable AccessTransformers if the file exists
+    def at = file('src/main/resources/META-INF/accesstransformer.cfg')
+    if (at.exists()) {
+        accessTransformers.from(at.absolutePath)
+    }
 
     // Default run configurations.
     // These can be tweaked, removed, or duplicated as needed.
