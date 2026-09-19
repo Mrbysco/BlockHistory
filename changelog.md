@@ -1,1 +1,1 @@
-* Initial update to 1.21
+* Fix time format to use 24h time instead of 12h
