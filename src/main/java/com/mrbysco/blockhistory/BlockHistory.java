@@ -62,7 +62,7 @@ public class BlockHistory {
 				LOGGER.error(e.getMessage());
 			}
 
-			container.registerConfig(ModConfig.Type.SERVER, HistoryConfig.serverSpec);
+			container.registerConfig(ModConfig.Type.SYNCED, HistoryConfig.serverSpec);
 			eventBus.register(HistoryConfig.class);
 
 			NeoForge.EVENT_BUS.register(this);
